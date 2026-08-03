@@ -1,0 +1,117 @@
+---
+title: "Get Press Start Running on Your Machine in Minutes"
+sidebarTitle: "Getting Started"
+description: "Step-by-step setup guide for Press Start: clone the repo, install dependencies, spin up the Vite dev server, and customise your arcade portfolio content."
+---
+
+This page walks you through everything you need to get Press Start running on your local machine — from cloning the repository and installing dependencies to exploring the live dev server and understanding how to swap in your own content. The whole process takes fewer than five minutes on a modern machine.
+
+## Prerequisites
+
+Before you begin, make sure the following tools are installed:
+
+- **Node.js 18 or later** — Vite 5 requires Node 18+. Check your version with `node -v`. Download from [nodejs.org](https://nodejs.org).
+- **Git** — needed to clone the repository. Verify with `git --version`.
+
+## Setup
+
+<Steps>
+  <Step title="Clone the repository">
+    Run the following command to clone Press Start to your local machine:
+
+    ```bash
+    git clone https://github.com/apursley2012/press-start.git
+    ```
+
+    Then move into the project directory:
+
+    ```bash
+    cd press-start
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    Install all required packages using your preferred package manager:
+
+    <CodeGroup>
+      ```bash npm
+      npm install
+      ```
+
+      ```bash yarn
+      yarn install
+      ```
+
+      ```bash pnpm
+      pnpm install
+      ```
+    </CodeGroup>
+
+    This pulls in React 18, React Router v6, Vite, Tailwind CSS, and Lucide React, along with all their transitive dependencies.
+  </Step>
+
+  <Step title="Start the development server">
+    Launch the Vite dev server:
+
+    ```bash
+    npm run dev
+    ```
+
+    Vite starts on its default port and prints something like:
+
+    ```
+    VITE v5.x.x  ready in 300ms
+
+    ➜  Local:   http://localhost:5173/
+    ➜  Network: use --host to expose
+    ```
+  </Step>
+
+  <Step title="Open the app in your browser">
+    Navigate to [http://localhost:5173](http://localhost:5173).
+
+    You will land on the **Press Start Gate** — a full-screen black splash with the glowing green heading `PLAYER ONE` and a pulsing magenta **PRESS START** button. Clicking (or pressing) the button triggers a brief white screen-flash and fades the gate out, revealing the main application with the sticky `ArcadeMenu` navigation at the top.
+
+    Use the menu links or your keyboard arrow keys to move between the seven pages: Home, About, Projects, Skills, Writing, Case Studies, and Contact.
+  </Step>
+</Steps>
+
+## Local Development Tips
+
+**Hot Module Replacement.** Vite's HMR is active out of the box. Any change you make to a `.js`, `.jsx`, or `.css` file is reflected in the browser instantly without a full page reload. Component state is preserved across most edits.
+
+**Tailwind JIT.** Tailwind is configured in Just-in-Time mode, meaning only the utility classes actually used in the source files are compiled into `assets/main.css`. Adding a new class to a component makes it appear in the stylesheet within milliseconds. There is no need to purge unused styles manually in development.
+
+**CSS Custom Properties.** The four arcade CSS variables (`--neon-green`, `--neon-magenta`, `--neon-cyan`, `--bg-color`) are declared at the `:root` level in the compiled stylesheet. You can override them in your browser's DevTools to experiment with alternative colour schemes before committing changes to the source.
+
+## Customising Your Content
+
+All portfolio data is stored as plain JavaScript arrays in the main source bundle. Locate and edit each array to replace the sample entries with your own information:
+
+| Data Array | Page it Powers | What to Change |
+|---|---|---|
+| `chapters` (the `G` array) | `/about` | Origin story levels: title, body text, and inline SVG icon |
+| `projects` (the `m` array) | `/projects` | Project title, category, description, tech stack, and demo/source links |
+| `skillCategories` (the `z` array) | `/skills` | Skill group names, individual skill names, and level values (1–5) |
+| `writings` (the `$` array) | `/writing` | Article title, type label, date, excerpt, and full content |
+| `caseStudies` (the `Y` array) | `/case-studies` | Boss name, problem, goal, process, design notes, tech, debug log, result, XP tags |
+
+The hero name on the Home page is hard-coded as `DEV NAME` in the `HomePage` component — replace both instances with your own name (or handle). The tagline directly below it (`Software developer. Player one.` / `Currently grinding side quests.`) can be edited in the same component.
+
+## Building for Production
+
+When you are ready to deploy, generate an optimised build:
+
+```bash
+npm run build
+```
+
+Vite compiles and tree-shakes the application into a `dist/` directory. The output includes the hashed asset bundles (`assets/main.js`, `assets/main.css`) and the root `index.html`. Upload the entire `dist/` directory to your static host.
+
+<Tip>
+  Press Start ships with pre-built static HTML shells in the `/pages/` directory — `About.html`, `Projects.html`, `Skills.html`, `Writing.html`, `CaseStudies.html`, and `Contact.html`. Each shell is a minimal HTML document that immediately loads the same Vite bundle as `index.html`. GitHub Pages serves these files when a visitor navigates directly to a deep URL (for example, `https://your-username.github.io/press-start/projects`), preventing the default 404 that would otherwise occur on a host that cannot perform server-side rewriting for a client-side router. If you deploy to a host that supports rewrite rules (Netlify, Vercel, Cloudflare Pages), you can configure a catch-all redirect to `index.html` instead and do not need the page shells.
+</Tip>
+
+<Warning>
+  The contact form submission animation is purely cosmetic — there is no server-side handler or third-party form service wired up by default. The form cycles through `idle → inserting → connecting → success` states on the client only. Before going live, integrate a backend endpoint or a service such as Formspree, EmailJS, or Netlify Forms to actually deliver messages.
+</Warning>

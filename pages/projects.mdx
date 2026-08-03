@@ -1,0 +1,126 @@
+---
+title: "Projects Page — Press Start Portfolio Game Select"
+sidebarTitle: "Projects"
+description: "The Projects page presents each project as an arcade game cartridge in a filterable grid. Clicking a card opens a full-screen detail modal with links and tech stack."
+---
+
+The Projects page (`F` component, route `/projects`) takes the conventional portfolio grid and wraps it in a **Game Select** screen metaphor. Each project appears as an arcade game cartridge with a neon-bordered label area, a category badge, and five decorative "cartridge slot" bars along the bottom edge. Hovering a card tilts it with a 3D perspective transform and reveals a blinking `INSERT COIN` tooltip. Clicking opens a full-screen detail modal with the project description, tech stack chips, and action links.
+
+## Route
+
+`/projects`
+
+## Filter bar
+
+Above the grid, a horizontal row of category buttons lets visitors narrow the display. The current filter is tracked in local state (`useState("ALL GAMES")`). The available tabs are:
+
+```js
+const filters = ["ALL GAMES", "WEB", "DATA", "TOOLS", "DEMOS"];
+```
+
+The active tab is styled with `border-arcade-green text-arcade-green bg-arcade-green/10`; inactive tabs are muted and gain a white highlight on hover. Clicking `"ALL GAMES"` resets the filter and shows every project.
+
+## Project data
+
+Projects are defined in the `m` array inside the `F` component block. Each object has the following shape:
+
+```js
+const projects = [
+  {
+    id: 1,
+    title: "NEON CRM",
+    category: "WEB",
+    desc: "A full-stack customer relationship manager built for speed and aesthetics. Handles 10k+ records with sub-50ms query times.",
+    stack: ["React", "Node.js", "PostgreSQL", "Redis"],
+    links: {
+      demo:   "#",   // optional — omit key to hide the button
+      source: "#",   // optional
+      manual: "#",   // optional
+    },
+    color: "var(--neon-magenta)",
+    isSample: false,
+  },
+  {
+    id: 2,
+    title: "DATA VIZ 99",
+    category: "DATA",
+    desc: "Interactive dashboard for visualizing complex datasets. Uses WebGL for rendering millions of points without dropping frames.",
+    stack: ["Three.js", "TypeScript", "Python", "FastAPI"],
+    links: { demo: "#", source: "#", manual: "#" },
+    color: "var(--neon-cyan)",
+    isSample: true,
+  },
+  {
+    id: 3,
+    title: "CLI TOOLKIT",
+    category: "TOOLS",
+    desc: "A collection of terminal utilities for automating boring tasks. Written in Go for maximum performance and cross-platform compatibility.",
+    stack: ["Go", "Bash", "GitHub Actions"],
+    links: { source: "#", manual: "#" },
+    color: "var(--neon-green)",
+    isSample: false,
+  },
+  {
+    id: 4,
+    title: "PIXEL ENGINE",
+    category: "DEMOS",
+    desc: "A lightweight 2D game engine built entirely in vanilla JavaScript. Features collision detection, sprite animation, and a basic physics system.",
+    stack: ["JavaScript", "HTML5 Canvas"],
+    links: { demo: "#", source: "#" },
+    color: "var(--neon-yellow)",
+    isSample: true,
+  },
+];
+```
+
+### Field reference
+
+| Field      | Type     | Required | Notes                                                           |
+|------------|----------|----------|-----------------------------------------------------------------|
+| `id`       | number   | Yes      | Unique identifier; used as the React key and for cabinet ID display |
+| `title`    | string   | Yes      | Uppercase; displayed in Press Start 2P font on the cartridge    |
+| `category` | string   | Yes      | Must match one of the filter tab values for filtering to work   |
+| `desc`     | string   | Yes      | Displayed in the detail modal                                   |
+| `stack`    | string[] | Yes      | Rendered as chip badges in the modal tech-stack section         |
+| `links`    | object   | Yes      | All three keys (`demo`, `source`, `manual`) are optional; omit a key to hide its button |
+| `color`    | string   | Yes      | CSS custom property string, e.g. `"var(--neon-magenta)"`; sets the cartridge border and title colour |
+| `isSample` | boolean  | Yes      | When `true`, a `DEMO ROM` badge appears in the modal title row  |
+
+### Adding a project
+
+1. Add a new object to the `m` array, giving it the next sequential `id`.
+2. Set `category` to one of the existing filter values, **or** add a new string to both the `m` entry and the `U` filters array so the new category tab appears.
+3. Replace `"#"` link values with real URLs.
+
+<Warning>
+The filter logic uses strict string equality (`s.category === l`). If you add a category to a project entry but forget to add it to the `U` array, that project will be visible under `"ALL GAMES"` but unreachable via its own tab.
+</Warning>
+
+## Card interaction
+
+Each card in the grid uses CSS 3D transforms on hover:
+
+- **translateY(-1rem)** lifts the card upward.
+- **rotateX(12deg)** tilts it away from the viewer, simulating a cartridge being picked up.
+- The `INSERT COIN` tooltip fades in below the card via `opacity-0 group-hover:opacity-100`.
+
+Click anywhere on the card to open the detail modal (sets `selectedProject` state).
+
+## Detail modal
+
+Clicking a card sets the `t` state to the selected project object, which renders a fixed full-screen overlay with:
+
+- **Header row** — project title in its accent colour, plus the `DEMO ROM` badge if `isSample` is `true`.
+- **Description** — the `desc` string in body font.
+- **Tech stack** — each `stack` entry rendered as a dark chip with a `#444` border.
+- **Action buttons** — conditionally rendered based on which keys exist in `links`:
+  - `demo` → green `▶ PLAY DEMO` button
+  - `source` → cyan `</> VIEW SOURCE` button
+  - `manual` → magenta `📖 READ MANUAL` button
+- **Stats sidebar** (desktop only) — fixed arcade stats: `PLAYER: 1 / STAGE: CLEAR / SCORE: 999400` plus the cabinet ID derived from the project's `id` padded to four digits.
+
+Close the modal by clicking the `✕` button in the top-right corner, which sets `t` back to `null`.
+
+<Tip>
+The stats sidebar values (`PLAYER`, `STAGE`, `SCORE`) are hardcoded decorative text. If you want per-project stats, add fields to the data object and read them in the modal's sidebar JSX.
+</Tip>

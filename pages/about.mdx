@@ -1,0 +1,102 @@
+---
+title: "About Page — Press Start Portfolio Origin Story"
+sidebarTitle: "About"
+description: "The About page narrates the developer's career journey as a three-chapter RPG level-up sequence, ending with a Perk Unlocked card and a closing quote."
+---
+
+The About page (`_` component, route `/about`) reframes a conventional bio as an RPG **origin story**. Three chapters — each titled as a numbered level — scroll into view one at a time as the visitor moves down the page. Every chapter uses an `IntersectionObserver` to slide in from below on first visibility, creating the feeling of unlocking a new area of the map. The section closes with a blinking "PERK UNLOCKED" achievement card listing passive character traits, and a full-width pixel-font quote.
+
+## Route
+
+`/about`
+
+## Chapter layout
+
+Each chapter is rendered by the `B` sub-component and follows the same structure: a pixel-art icon on one side, heading and body copy on the other. Even-indexed chapters have the icon on the left; odd-indexed chapters flip to `md:flex-row-reverse` so the icon appears on the right, creating a zigzag reading flow on wider screens.
+
+```
+┌─────────────────────────────────────────┐
+│  [ICON]   LVL 1: THE WARD               │
+│           Body copy paragraph...        │
+├─────────────────────────────────────────┤
+│           LVL 2: THE SHOP   [ICON]      │
+│           Body copy paragraph...        │
+├─────────────────────────────────────────┤
+│  [ICON]   LVL 3: THE TERMINAL           │
+│           Body copy paragraph...        │
+└─────────────────────────────────────────┘
+```
+
+## Chapter data
+
+The chapters are defined in the `G` array inside the `_` component block in `main.js`. Each object has this shape:
+
+```js
+const chapters = [
+  {
+    title: "LVL 1: THE WARD",
+    text: "Started the campaign in nursing school. Learned triage, high-stakes debugging (human bodies), and how to stay calm when the alarms go off. Decided the meta was too stressful.",
+    icon: <svg>…</svg>, // inline pixel-art SVG
+  },
+  {
+    title: "LVL 2: THE SHOP",
+    text: "Pivoted to retail and merch. Mastered inventory management, customer-facing diplomacy, and the art of the upsell. Realized I liked building the systems more than running them.",
+    icon: <svg>…</svg>,
+  },
+  {
+    title: "LVL 3: THE TERMINAL",
+    text: "Curiosity took over. Opened a terminal, wrote my first script, and saw the text turn green. The feedback loop was instant. I was hooked. Time to respec my character.",
+    icon: <svg>…</svg>,
+  },
+];
+```
+
+### Changing chapter content
+
+To edit an existing chapter, find the matching object in the `G` array and update `title` and `text` directly.
+
+To **add a chapter**, append a new object to the array. The alternating layout is derived automatically from the array index (`n % 2 === 0`), so the new chapter will zigzag correctly without any additional configuration.
+
+<Tip>
+Each chapter icon is an inline SVG drawn on a 16 × 16 pixel grid. Use `fill-arcade-magenta`, `fill-arcade-cyan`, or `fill-arcade-green` Tailwind classes to colour-code new icons consistently with the existing palette.
+</Tip>
+
+## Scroll-in animation
+
+The `B` component attaches an `IntersectionObserver` to its root element. When the chapter crosses the `threshold: 0.2` boundary, a state flag flips and Tailwind transitions the element from `opacity-0 translate-y-12` to `opacity-100 translate-y-0` over 1 000 ms. The animation fires only once — the observer disconnects immediately after the first intersection.
+
+```js
+useEffect(() => {
+  const observer = new IntersectionObserver(
+    ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+    { threshold: 0.2 }
+  );
+  if (ref.current) observer.observe(ref.current);
+  return () => observer.disconnect();
+}, []);
+```
+
+## Perk Unlocked card
+
+Below the three chapters sits a yellow-bordered achievement card with `animate-pulse-fast`. It lists five passive traits as a bullet list:
+
+- Detail-oriented
+- Creative problem solver
+- Highly sarcastic
+- Practical builder
+- Spots crooked alignment from across the room
+
+The first four bullets are coloured `text-arcade-green`; the last is `text-arcade-magenta` for comic emphasis. These traits are hardcoded in JSX inside the `_` component — edit them directly in `main.js` to match the real developer personality.
+
+## Closing quote
+
+The page ends with a full-width blockquote in VT323 font at 4–5xl size:
+
+> "I don't just write code.  
+> I build systems that make sense."
+
+Both the quote text and its neon-green glow style are hardcoded in JSX. Replace the string literal to customise.
+
+<Note>
+All bio copy — chapter text, perk bullets, and the closing quote — is hardcoded directly in the component JSX. There is no CMS or external data file for this page. Edit `main.js` (or the source component before bundling) to update any copy.
+</Note>

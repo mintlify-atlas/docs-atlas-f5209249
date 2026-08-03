@@ -1,0 +1,237 @@
+---
+title: "Design Tokens: Arcade Color System & Utilities"
+sidebarTitle: "Design Tokens"
+description: "Complete reference for Press Start's arcade color tokens, CSS custom properties, glow effects, pixel borders, CRT utilities, and custom scrollbar styles."
+---
+
+Press Start's visual identity is built on a tightly scoped set of design tokens — a dark-field background, four neon accent colors, and a suite of hand-crafted utility classes that produce glowing text, pixel-art borders, and CRT-style overlays. Every color, shadow, and special effect in the UI traces back to the values documented on this page.
+
+## CSS Custom Properties
+
+Five global custom properties are declared on `:root` in `main.css`. They drive the hand-authored utility classes (`glow-*`, `pixel-border-*`, `crt-*`) and are available anywhere in the stylesheet via `var()`.
+
+```css
+:root {
+  --bg-color:     #060309;  /* page background */
+  --neon-green:   #39FF14;  /* primary accent */
+  --neon-magenta: #FF0099;  /* secondary accent / danger */
+  --neon-cyan:    #00F0FF;  /* tertiary accent / info */
+  --text-white:   #F5FFF5;  /* default body text */
+}
+```
+
+| Variable | Hex Value | Primary Usage |
+|---|---|---|
+| `--bg-color` | `#060309` | Page background, scrollbar track |
+| `--neon-green` | `#39FF14` | Glow effects, pixel borders, scrollbar thumb |
+| `--neon-magenta` | `#FF0099` | Secondary glows, pixel borders, scrollbar hover, selection highlight |
+| `--neon-cyan` | `#00F0FF` | Tertiary glows, focus rings |
+| `--text-white` | `#F5FFF5` | Default text, selection text color |
+
+---
+
+## Tailwind `arcade-` Color Tokens
+
+The Tailwind theme extends the default palette with seven `arcade-` color tokens. These compile into the full set of `bg-arcade-*`, `text-arcade-*`, `border-arcade-*`, and `fill-arcade-*` utility classes used throughout the component tree.
+
+| Token | Hex | Tailwind Classes | Typical Use |
+|---|---|---|---|
+| `arcade-black` | `#060309` | `bg-arcade-black`, `text-arcade-black` | Page background, overlay fills |
+| `arcade-green` | `#39FF14` | `bg-arcade-green`, `text-arcade-green`, `border-arcade-green` | Primary headings, active states, borders |
+| `arcade-magenta` | `#FF0099` | `bg-arcade-magenta`, `text-arcade-magenta`, `border-arcade-magenta` | Secondary accents, hover highlights, badges |
+| `arcade-cyan` | `#00F0FF` | `bg-arcade-cyan`, `text-arcade-cyan`, `border-arcade-cyan` | Links, focus rings, info indicators |
+| `arcade-white` | `#F5FFF5` | `bg-arcade-white`, `text-arcade-white` | Body text, card backgrounds |
+| `arcade-muted` | `#7CFF8A` | `text-arcade-muted`, `border-arcade-muted` | Subdued labels, placeholder text |
+| `arcade-yellow` | `#FFEA00` | `bg-arcade-yellow`, `text-arcade-yellow`, `border-arcade-yellow` | Warnings, score displays, star ratings |
+
+Opacity variants (e.g. `bg-arcade-black/80`, `border-arcade-green/30`) are generated automatically by Tailwind and used throughout the project for overlays and translucent surfaces.
+
+---
+
+## Glow Text-Shadow Utilities
+
+Three `.glow-*` utility classes apply a two-layer `text-shadow` — a tight inner glow at full color and a softer outer halo at 50% opacity — to any text element.
+
+```css
+.glow-green {
+  text-shadow:
+    0 0 5px var(--neon-green),
+    0 0 10px rgba(57, 255, 20, 0.5);
+}
+
+.glow-magenta {
+  text-shadow:
+    0 0 5px var(--neon-magenta),
+    0 0 10px rgba(255, 0, 153, 0.5);
+}
+
+.glow-cyan {
+  text-shadow:
+    0 0 5px var(--neon-cyan),
+    0 0 10px rgba(0, 240, 255, 0.5);
+}
+```
+
+**Usage example:**
+
+```jsx
+<h1 className="font-press text-arcade-green glow-green">
+  PRESS START
+</h1>
+
+<span className="font-vt323 text-arcade-magenta glow-magenta">
+  PLAYER 1
+</span>
+```
+
+---
+
+## Pixel Border Utilities
+
+The `.pixel-border-*` classes simulate a flat, pixel-art style border using `box-shadow` offsets on all four sides rather than CSS `border`. A `4px` margin ensures the shadow is never clipped by the element's containing block.
+
+```css
+.pixel-border-green {
+  box-shadow:
+    -4px 0 0 0 var(--neon-green),
+     4px 0 0 0 var(--neon-green),
+     0 -4px 0 0 var(--neon-green),
+     0  4px 0 0 var(--neon-green);
+  margin: 4px;
+}
+
+.pixel-border-magenta {
+  box-shadow:
+    -4px 0 0 0 var(--neon-magenta),
+     4px 0 0 0 var(--neon-magenta),
+     0 -4px 0 0 var(--neon-magenta),
+     0  4px 0 0 var(--neon-magenta);
+  margin: 4px;
+}
+```
+
+**Usage example:**
+
+```jsx
+<div className="pixel-border-green p-4 bg-arcade-black">
+  <p className="text-arcade-green font-press text-xs">HIGH SCORE</p>
+</div>
+
+<button className="pixel-border-magenta px-6 py-2 font-press text-arcade-magenta">
+  CONTINUE
+</button>
+```
+
+---
+
+## CRT Effect Utilities
+
+Four utility classes recreate the look of a cathode-ray tube monitor: a scanline overlay, flicker animation, RGB channel separation, and pixel-crisp image rendering.
+
+```css
+/* Fixed full-screen overlay with scanline gradient and vignette */
+.crt-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.25) 50%
+  );
+  background-size: 100% 4px;
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.9);
+}
+
+/* Continuous opacity flicker driven by the `flicker` keyframe */
+.crt-flicker {
+  animation: flicker 0.15s infinite;
+}
+
+/* Chromatic aberration — red shifted left, blue shifted right */
+.crt-rgb-split {
+  text-shadow:
+    -1px 0 0 rgba(255, 0, 0, 0.5),
+     1px 0 0 rgba(0, 0, 255, 0.5);
+}
+
+/* Forces pixel-perfect rendering for sprites and pixel art */
+.crisp-edges {
+  image-rendering: pixelated;
+  shape-rendering: crispEdges;
+}
+```
+
+| Class | Effect | Typical Use |
+|---|---|---|
+| `crt-overlay` | Full-screen scanlines + vignette | App root wrapper |
+| `crt-flicker` | Continuous opacity flicker | Monitor startup sequence |
+| `crt-rgb-split` | Red/blue channel offset | Glitched headings, error states |
+| `crisp-edges` | Pixelated image rendering | Sprite sheets, pixel-art icons |
+
+---
+
+## Custom Scrollbar
+
+The scrollbar is styled globally using WebKit pseudo-elements to match the arcade palette — a near-black track with a neon-green thumb that turns magenta on hover.
+
+```css
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+  border-left: 2px solid #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--neon-green);
+  border: 2px solid var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-magenta);
+}
+```
+
+The `2px` gap between the thumb and its track is achieved with `border: 2px solid var(--bg-color)` on the thumb, which matches the page background and creates a visual separation without a true margin.
+
+---
+
+## Combining Tokens in JSX
+
+Tokens are designed to be composed freely. Below are representative patterns from the project:
+
+```jsx
+{/* Neon card with green accent border and glowing title */}
+<article className="bg-arcade-black border-2 border-arcade-green pixel-border-green p-6">
+  <h2 className="font-press text-arcade-green glow-green text-sm mb-4">
+    PROJECT NAME
+  </h2>
+  <p className="font-inter text-arcade-white/80 leading-relaxed">
+    Project description goes here.
+  </p>
+</article>
+
+{/* Magenta badge */}
+<span className="bg-arcade-magenta/10 border border-arcade-magenta text-arcade-magenta font-vt323 text-lg px-3 py-1">
+  NEW
+</span>
+
+{/* Cyan link with focus ring */}
+<a
+  href="/projects"
+  className="text-arcade-cyan hover:text-arcade-white focus:outline-none focus:ring-4 focus:ring-arcade-cyan"
+>
+  VIEW ALL PROJECTS
+</a>
+
+{/* Pixel-art sprite */}
+<img
+  src="/sprites/character.png"
+  alt="Player character"
+  className="crisp-edges w-16 h-16"
+/>
+```

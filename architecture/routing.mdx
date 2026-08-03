@@ -1,0 +1,146 @@
+---
+title: "Press Start SPA: Routing Architecture and Strategy"
+sidebarTitle: "Routing"
+description: "How Press Start uses React Router v6, static HTML page shells, PageWrapper transitions, and keyboard navigation to handle routing on GitHub Pages."
+---
+
+Press Start uses React Router v6 inside a `BrowserRouter` to manage client-side navigation between seven named routes and a 404 catch-all. Because the app is deployed on GitHub Pages — a static host with no server-side routing — a combination of hash-based URL fragments and pre-generated static HTML shells in the `pages/` directory ensures that every route is reachable by direct URL, bookmark, or social media link without hitting a 404.
+
+## Route definitions
+
+All `<Route>` elements are declared inside a single `<Routes>` block within the `PageWrapper` transition container in `main.js`:
+
+```jsx
+<Routes>
+  <Route path="/"            element={<Home />} />
+  <Route path="/about"       element={<About />} />
+  <Route path="/projects"    element={<Projects />} />
+  <Route path="/skills"      element={<Skills />} />
+  <Route path="/writing"     element={<Writing />} />
+  <Route path="/case-studies" element={<CaseStudies />} />
+  <Route path="/contact"     element={<Contact />} />
+  <Route path="*"            element={
+    <div className="flex items-center justify-center h-[60vh]">
+      <h2 className="font-press text-2xl text-arcade-magenta text-center leading-loose">
+        GAME OVER<br />
+        <span className="text-sm text-arcade-muted">boring portfolio not found</span>
+      </h2>
+    </div>
+  } />
+</Routes>
+```
+
+The wildcard `path="*"` route renders a retro **GAME OVER** screen for any URL that does not match the seven named paths.
+
+## Named routes at a glance
+
+| Path | Label | Page component |
+|---|---|---|
+| `/` | HOME | `Home` |
+| `/about` | ABOUT | `About` |
+| `/projects` | PROJECTS | `Projects` |
+| `/skills` | SKILLS | `Skills` |
+| `/writing` | WRITING | `Writing` |
+| `/case-studies` | CASE STUDIES | `CaseStudies` |
+| `/contact` | CONTACT | `Contact` |
+| `*` | — | GAME OVER inline element |
+
+## Static HTML shell mechanism
+
+GitHub Pages cannot rewrite URLs to `index.html` the way a Node or Nginx server can. Every `pages/*.html` file is a lightweight shell that solves this by writing the intended route into the hash fragment before the React app boots.
+
+The inline script in each shell follows the same pattern, shown here for `pages/About.html`:
+
+```html
+<script>
+  window.__STATIC_PAGE_ROUTE__ = "/about";
+  if (!window.location.hash || window.location.hash === "#/" || window.location.hash === "#") {
+    window.location.hash = "/about";
+  }
+</script>
+```
+
+When the shell is served, the script sets `window.location.hash` to the route path. React Router's history implementation reads the hash fragment on startup and activates the matching `<Route>` without any server involvement. The `window.__STATIC_PAGE_ROUTE__` assignment provides a fallback signal so the app can cross-check the intended route during initialisation.
+
+<Note>
+  There is one shell per named route in `pages/`. The root `/` route is covered by `index.html` at the repository root and does not need its own shell.
+</Note>
+
+## PageWrapper transition component
+
+Every `<Route>` renders inside `PageWrapper`, a component that listens to the current location and applies a fade transition whenever the route changes:
+
+```jsx
+function PageWrapper({ children }) {
+  const location = useLocation();
+  const [currentLocation, setCurrentLocation] = useState(location);
+  const [animationState, setAnimationState] = useState("fadeIn");
+
+  useEffect(() => {
+    if (location !== currentLocation) {
+      setAnimationState("fadeOut");
+      setTimeout(() => {
+        setCurrentLocation(location);
+        setAnimationState("fadeIn");
+      }, 150);
+    }
+  }, [location, currentLocation]);
+
+  return (
+    <div className={`transition-opacity duration-150 ${animationState === "fadeIn" ? "opacity-100" : "opacity-0"}`}>
+      {animationState === "fadeOut" && (
+        <div className="fixed inset-0 z-50 bg-arcade-green/10 h-2 w-full animate-scanline pointer-events-none" />
+      )}
+      {children}
+    </div>
+  );
+}
+```
+
+The transition has two phases:
+
+1. **Fade out** — the wrapper's opacity drops to `0` over 150 ms. Simultaneously a green scanline div flashes across the screen, mimicking a CRT beam sweep.
+2. **Fade in** — after 150 ms the new route's content replaces the old content and opacity returns to `1`.
+
+The scanline element is only mounted during the `"fadeOut"` phase and is removed from the DOM before the fade-in completes, keeping the animation cost minimal.
+
+## Keyboard navigation
+
+`ArcadeMenu` registers a `keydown` listener on `window` and maps the arrow keys to route changes, matching the joystick controls of a physical arcade cabinet:
+
+```js
+const routes = [
+  { path: "/",            label: "HOME" },
+  { path: "/about",       label: "ABOUT" },
+  { path: "/projects",    label: "PROJECTS" },
+  { path: "/skills",      label: "SKILLS" },
+  { path: "/writing",     label: "WRITING" },
+  { path: "/case-studies",label: "CASE STUDIES" },
+  { path: "/contact",     label: "CONTACT" },
+];
+
+useEffect(() => {
+  const handleKey = (e) => {
+    const currentIndex = routes.findIndex(r => r.path === location.pathname);
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = (currentIndex + 1) % routes.length;
+      navigate(routes[next].path);
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = (currentIndex - 1 + routes.length) % routes.length;
+      navigate(routes[prev].path);
+    }
+  };
+  window.addEventListener("keydown", handleKey);
+  return () => window.removeEventListener("keydown", handleKey);
+}, [location.pathname, navigate]);
+```
+
+The navigation wraps around: pressing **ArrowLeft** on the HOME route jumps to CONTACT, and pressing **ArrowRight** on CONTACT jumps back to HOME. Both `ArrowRight`/`ArrowDown` and `ArrowLeft`/`ArrowUp` are treated as equivalent pairs so the controls feel natural whether the player thinks of movement as horizontal or vertical.
+
+<Tip>
+  Because the listener is attached to `window` and uses `e.preventDefault()` for arrow keys, users can navigate the entire portfolio without touching the mouse — the intended experience for the arcade cabinet metaphor.
+</Tip>
+
+For full `ArcadeMenu` documentation including the visual indicator and active-route highlighting, see [ArcadeMenu component reference](/components/arcade-menu).

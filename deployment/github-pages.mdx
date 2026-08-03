@@ -1,0 +1,143 @@
+---
+title: "Deploy Press Start to GitHub Pages — Hosting Guide"
+sidebarTitle: "GitHub Pages"
+description: "Step-by-step guide to deploying the Press Start React portfolio to GitHub Pages, including SPA routing, .nojekyll, and custom domain setup."
+---
+
+Press Start is designed to deploy to GitHub Pages out of the box. Because the build output is fully static HTML, JavaScript, and CSS, GitHub Pages can serve it with zero server configuration. The repo already includes a `.nojekyll` file and a complete set of per-route HTML shells under `pages/` so that direct URL navigation works correctly without any redirect rules.
+
+## Deployment steps
+
+<Steps>
+  <Step title="Fork or clone the repository">
+    Start with your own copy of the repo so you can push changes and configure GitHub Pages under your account:
+
+    ```bash
+    git clone https://github.com/your-username/press-start.git
+    cd press-start
+    npm install
+    ```
+
+    Replace `your-username` with your GitHub username after forking.
+  </Step>
+
+  <Step title="Build with Vite">
+    Compile the React application into the static `dist/` directory:
+
+    ```bash
+    npm run build
+    ```
+
+    Vite writes `dist/index.html`, `dist/assets/main.js`, `dist/assets/main.css`, and the full set of `dist/pages/*.html` shells. The build typically finishes in a few seconds.
+  </Step>
+
+  <Step title="Configure GitHub Pages in repository Settings">
+    In your GitHub repository, navigate to **Settings → Pages**.
+
+    - **Source:** select the branch that contains your built files (usually `main` or a dedicated `gh-pages` branch).
+    - **Folder:** set to `/ (root)` if the built files are at the repo root, or `/dist` if you push only the `dist/` contents.
+
+    Save the settings. GitHub Pages will begin building and publishing — a green banner with your live URL appears once it finishes.
+  </Step>
+
+  <Step title="Push the built files">
+    Commit and push the `dist/` output (or the files within it) to the branch you configured above.
+
+    **Option A — commit dist/ to main:**
+
+    ```bash
+    git add dist/
+    git commit -m "chore: add production build"
+    git push origin main
+    ```
+
+    **Option B — push dist/ contents to a gh-pages branch:**
+
+    ```bash
+    git subtree push --prefix dist origin gh-pages
+    ```
+
+    With Option B, set the GitHub Pages source branch to `gh-pages` and folder to `/ (root)`.
+  </Step>
+
+  <Step title="Access your live site">
+    Once GitHub Pages finishes deploying, your portfolio is available at:
+
+    ```
+    https://[username].github.io/press-start/
+    ```
+
+    Replace `[username]` with your GitHub username and `press-start` with your repository name if you renamed the fork. Each route is accessible directly, for example `https://[username].github.io/press-start/pages/About.html`.
+  </Step>
+</Steps>
+
+## The .nojekyll file
+
+The repo root contains an empty file named `.nojekyll`. By default, GitHub Pages runs every repository through Jekyll — a static site generator that deliberately ignores files and folders whose names begin with an underscore (`_`). This would silently drop asset directories named `_assets` or similar, breaking the page.
+
+Placing an empty `.nojekyll` file at the root of the published branch tells GitHub Pages to skip Jekyll processing entirely and serve files exactly as they appear in the repository. The file has no contents — its presence alone is the signal.
+
+```bash
+# Verify the file exists in your build output
+ls -la dist/.nojekyll
+```
+
+If you ever delete it by accident, recreate it with:
+
+```bash
+touch dist/.nojekyll
+```
+
+## Static HTML shell routing strategy
+
+GitHub Pages is a static file host. It has no awareness of React Router, so a visitor navigating directly to a client-side route — for example by typing `https://[username].github.io/press-start/pages/About.html` into the address bar or sharing a link — would normally receive a 404 error because there is no server to rewrite the URL to `index.html`.
+
+Press Start solves this without any server configuration. Each route has a corresponding HTML shell file under `pages/`. When the browser loads one of these files, a small inline bootstrap script immediately sets the browser's URL hash to the correct route path and stores the intended route in `window.__STATIC_PAGE_ROUTE__`. The main React bundle then reads `window.location.hash` on mount and renders the matching page component.
+
+The full set of route shells is:
+
+| File | Route rendered |
+|---|---|
+| `pages/About.html` | `/about` — biography and background |
+| `pages/Projects.html` | `/projects` — project showcase |
+| `pages/Skills.html` | `/skills` — technology skill set |
+| `pages/Writing.html` | `/writing` — articles and posts |
+| `pages/CaseStudies.html` | `/case-studies` — in-depth case studies |
+| `pages/Contact.html` | `/contact` — contact form |
+
+The bootstrap script embedded in each shell follows this pattern, shown here for `pages/About.html`:
+
+```html
+<script>
+  window.__STATIC_PAGE_ROUTE__ = "/about";
+  if (!window.location.hash || window.location.hash === "#/" || window.location.hash === "#") {
+    window.location.hash = "/about";
+  }
+</script>
+```
+
+After the hash is set, the same `assets/main.js` bundle that powers the root `index.html` is loaded as an ES module. React mounts into `<div id="root">`, React Router reads the hash, and the correct view renders — all without a server redirect.
+
+## Custom domain
+
+To serve Press Start from your own domain (for example `portfolio.yourname.dev`), add a `CNAME` file to the root of your published branch containing just the domain name:
+
+```
+portfolio.yourname.dev
+```
+
+Create it alongside the build output:
+
+```bash
+echo "portfolio.yourname.dev" > dist/CNAME
+```
+
+Then add a `CNAME` DNS record at your domain registrar pointing to `[username].github.io`. GitHub Pages detects the `CNAME` file automatically and provisions an HTTPS certificate via Let's Encrypt within a few minutes.
+
+<Warning>
+  If you rename or add routes in your React Router configuration, you **must** create a matching HTML shell in the `pages/` directory for each new route. Without a corresponding shell, direct navigation to that URL will return a 404 on GitHub Pages. Copy an existing shell (for example `pages/About.html`), update the `<title>`, and change the `window.__STATIC_PAGE_ROUTE__` value and hash assignment to match your new route path.
+</Warning>
+
+<Note>
+  The current repository already contains a pre-built `assets/` directory committed at the repo root. If you are deploying the repository as-is without any code changes, you can configure GitHub Pages to serve directly from the `main` branch root and skip running `npm run build` entirely. The committed build artefacts are production-ready.
+</Note>

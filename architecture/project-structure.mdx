@@ -1,0 +1,104 @@
+---
+title: "Press Start Project: Files and Directory Structure"
+sidebarTitle: "Project Structure"
+description: "Walkthrough of the Press Start layout: Vite build output, component modules, static page shells, and the GitHub Pages .nojekyll configuration."
+---
+
+Press Start is a Vite-built React 18 SPA whose deployment output is self-contained in the repository root. Because the project targets GitHub Pages — a static file host — every design choice in the directory layout serves either the React runtime, the Tailwind stylesheet, or the static-hosting redirect mechanism that makes direct URLs work without a server.
+
+## Directory tree
+
+```text
+press-start/
+├── index.html              # App shell — mounts React into #root
+├── .nojekyll               # Tells GitHub Pages to skip Jekyll processing
+├── assets/
+│   ├── main.js             # Bundled React app (Vite output)
+│   ├── main.css            # Tailwind CSS output
+│   └── jsx-runtime.js      # React JSX runtime (modulepreload target)
+├── components/
+│   ├── ArcadeMenu.js       # Navigation bar with keyboard support
+│   ├── CRTOverlay.js       # Scanline / phosphor glow visual layer
+│   ├── HighScoreTable.js   # Animated score display component
+│   ├── PixelSprite.js      # Pixel-art sprite renderer
+│   └── PressStartGate.js   # Splash-screen gate component
+└── pages/
+    ├── About.html
+    ├── CaseStudies.html
+    ├── Contact.html
+    ├── Projects.html
+    ├── Skills.html
+    └── Writing.html
+```
+
+## Top-level files
+
+### `index.html`
+
+The single app shell. Vite injects a `<script type="module">` tag pointing at `assets/main.js` and `<link rel="modulepreload">` tags for every component module. The body contains only `<div id="root"></div>` — the React tree renders into this node at runtime.
+
+### `.nojekyll`
+
+GitHub Pages uses Jekyll by default. Jekyll silently ignores any file or directory whose name begins with an underscore, which would break Vite's `_assets/` output in some configurations. The empty `.nojekyll` file in the repository root disables Jekyll entirely so GitHub Pages serves the raw files without transformation.
+
+## The `assets/` directory
+
+| File | Purpose |
+|---|---|
+| `main.js` | The complete bundled application. All React page components, routing logic, data arrays, and utility functions are compiled into this single module by Vite. |
+| `main.css` | Tailwind CSS utility classes and the custom arcade design tokens (`--neon-green`, `--neon-magenta`, etc.) compiled to a static stylesheet. |
+| `jsx-runtime.js` | The React 18 JSX transform runtime, extracted as a shared chunk so it can be `<link rel="modulepreload">`-ed by both `index.html` and the static page shells in `pages/`. |
+
+## The `components/` directory
+
+Each file in `components/` is a standalone ES module that exports exactly one React component. They are listed in `index.html` as `<link rel="modulepreload">` targets so the browser can fetch them in parallel before `main.js` executes.
+
+| File | Exported component |
+|---|---|
+| `ArcadeMenu.js` | `ArcadeMenu` — sticky navigation bar |
+| `CRTOverlay.js` | `CRTOverlay` — full-screen phosphor effect |
+| `HighScoreTable.js` | `HighScoreTable` — animated score display |
+| `PixelSprite.js` | `PixelSprite` — sprite renderer |
+| `PressStartGate.js` | `PressStartGate` — intro splash gate |
+
+## The `pages/` directory and the static shell pattern
+
+GitHub Pages serves static files. When a visitor navigates directly to `https://username.github.io/press-start/about`, GitHub Pages looks for a file at that path. Because the SPA only has one real HTML file (`index.html` at the root), a direct request to `/about` would return a 404.
+
+The `pages/` directory solves this with static HTML shells — one per route. Each shell is a minimal HTML document that loads the same `main.js` bundle, then runs a small inline script to communicate the intended route to the React app before it boots.
+
+### How a page shell works
+
+Here is the complete inline script from `pages/About.html`:
+
+```html
+<script>
+  window.__STATIC_PAGE_ROUTE__ = "/about";
+  if (!window.location.hash || window.location.hash === "#/" || window.location.hash === "#") {
+    window.location.hash = "/about";
+  }
+</script>
+```
+
+<Steps>
+  <Step title="GitHub Pages serves the shell">
+    A direct visit to `/pages/About.html` (or a GitHub Pages path alias) causes the server to return `pages/About.html` instead of a 404.
+  </Step>
+  <Step title="Route is written to the hash">
+    The inline script sets `window.location.hash` to `/about`. This immediately changes the browser URL to `pages/About.html#/about` without a page reload.
+  </Step>
+  <Step title="Signal is stored on window">
+    `window.__STATIC_PAGE_ROUTE__` is set to `"/about"` so the React app can read the intended route when it initialises, even before the hash-change event fires.
+  </Step>
+  <Step title="React Router picks up the hash">
+    The `BrowserRouter` (configured with hash-based history on GitHub Pages) reads the hash fragment and activates the correct `<Route>`, rendering the About page content inside the already-running SPA.
+  </Step>
+</Steps>
+
+<Note>
+  The `pages/` shells reference `../assets/main.js` with a relative path because they sit one directory level below the root. The `modulepreload` links use the same relative prefix.
+</Note>
+
+<Tip>
+  Every time you add a new route you must create a corresponding shell in `pages/` and add it to any static 404 fallback configuration in your GitHub Pages settings. Omitting the shell means direct URL access and social link previews will 404.
+</Tip>

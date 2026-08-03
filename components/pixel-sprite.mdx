@@ -1,0 +1,111 @@
+---
+title: "PixelSprite – Walking Pixel Art Character Decoration"
+sidebarTitle: "PixelSprite"
+description: "Fixed-position pixel art character that walks continuously across the bottom of the screen using a CSS keyframe animation and SVG rect primitives."
+---
+
+`PixelSprite` is a purely decorative component that renders a small pixel-art character at the bottom of the viewport and walks it endlessly from one side of the screen to the other. Built entirely from SVG `<rect>` elements on a 16 × 16 grid, the sprite adds a playful retro game feel to the portfolio without requiring any image assets. It never intercepts pointer events and sits at a low z-index so it never obscures interactive content.
+
+## Props
+
+This component accepts no props. Its position, animation, and appearance are entirely self-contained.
+
+## Usage
+
+```jsx
+import PixelSprite from './components/PixelSprite';
+
+// Mount once at the app root — it is fixed-position and decorative only
+function App() {
+  return (
+    <>
+      <Router>
+        <Layout />
+      </Router>
+      <PixelSprite />
+    </>
+  );
+}
+```
+
+## SVG structure
+
+The sprite is a 32 × 32 px `<svg>` element with a `viewBox="0 0 16 16"` coordinate space. All shapes are `<rect>` elements filled with the `fill-arcade-green` Tailwind class. The anatomy is:
+
+| Body part | x | y | width | height | Notes |
+|---|---|---|---|---|---|
+| Head | 6 | 2 | 4 | 4 | Static |
+| Body | 5 | 6 | 6 | 5 | Static |
+| Left arm | 3 | 6 | 2 | 4 | Static |
+| Right arm | 11 | 6 | 2 | 4 | Static |
+| Left leg | 5 | 11 | 2 | 3 | `animate-bounce`, 0.5 s duration |
+| Right leg | 9 | 11 | 2 | 3 | `animate-bounce`, 0.5 s duration, 0.25 s delay |
+
+```jsx
+<svg width="32" height="32" viewBox="0 0 16 16" className="crisp-edges fill-arcade-green">
+  {/* Head */}
+  <rect x="6" y="2" width="4" height="4" />
+  {/* Body */}
+  <rect x="5" y="6" width="6" height="5" />
+  {/* Left arm */}
+  <rect x="3" y="6" width="2" height="4" />
+  {/* Right arm */}
+  <rect x="11" y="6" width="2" height="4" />
+  {/* Left leg — bounces */}
+  <rect x="5" y="11" width="2" height="3"
+    className="animate-bounce"
+    style={{ animationDuration: '0.5s' }} />
+  {/* Right leg — bounces, offset by half a cycle */}
+  <rect x="9" y="11" width="2" height="3"
+    className="animate-bounce"
+    style={{ animationDuration: '0.5s', animationDelay: '0.25s' }} />
+</svg>
+```
+
+## Walk animation
+
+The SVG is wrapped in a `div` that carries an arbitrary Tailwind animation class:
+
+```jsx
+<div className="animate-[walk_10s_linear_infinite] inline-block whitespace-nowrap">
+```
+
+The `walk` keyframes translate the wrapper from `translateX(0)` to `translateX(-100%)` over 10 seconds with a linear timing function, then loop immediately. This moves the sprite smoothly from the right edge to beyond the left edge of its `overflow-hidden` outer container, giving the illusion of continuous walking.
+
+The outer fixed container is `fixed bottom-8 left-0 w-full overflow-hidden pointer-events-none z-30 opacity-80`, which:
+
+- Pins the sprite 2 rem from the bottom of the viewport (`bottom-8`)
+- Stretches the clipping boundary to the full viewport width (`w-full`)
+- Hides the sprite as it wraps off-screen (`overflow-hidden`)
+- Prevents any accidental click-target interference (`pointer-events-none`)
+- Keeps it below modals and the CRT overlay (`z-30`)
+- Gives it a subtle transparency (`opacity-80`)
+
+## Leg bounce stagger
+
+The two legs both use Tailwind's built-in `animate-bounce` with an overridden `animation-duration` of `0.5 s` (half Tailwind's default 1 s). The right leg adds an `animation-delay` of `0.25 s`, which is exactly half the bounce cycle, so one leg is always rising while the other is falling — mimicking a walking gait.
+
+<Note>
+  The `crisp-edges` class on the SVG sets `image-rendering: crisp-edges`
+  (or `pixelated` in Chromium), ensuring the pixel art stays sharp when the
+  browser scales the element. Without it, some browsers may anti-alias the
+  rectangles and soften the retro look.
+</Note>
+
+## Customization
+
+<Tip>
+  To change the walking speed, adjust the `10s` value in
+  `animate-[walk_10s_linear_infinite]`. Smaller values (e.g. `6s`) make the
+  sprite scurry faster; larger values (e.g. `20s`) produce a leisurely stroll.
+
+  The `fill-arcade-green` class controls the sprite's colour. Any colour token
+  from your Tailwind theme can be substituted — for example, `fill-arcade-cyan`
+  gives the sprite a blue tint. To add multiple sprites in different colours,
+  mount additional `PixelSprite` instances and pass a `color` prop after
+  refactoring the `className` to use a prop-driven value.
+
+  The walk keyframes are defined in `tailwind.config.js` under
+  `theme.extend.keyframes`. Change the `to` value from `-100%` to `100%` if
+  you want the sprite to walk left-to-right instead.
+</Tip>

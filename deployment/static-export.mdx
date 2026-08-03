@@ -1,0 +1,104 @@
+---
+title: "Static Export with Vite — Press Start Docs"
+sidebarTitle: "Static Export"
+description: "Learn how Vite builds Press Start into a fully static dist/ directory of HTML, JS, and CSS files ready to serve from any host."
+---
+
+Press Start uses Vite as its build tool. Running a single command compiles every React component, stylesheet, and asset into a fully static `dist/` directory — pure HTML, JavaScript, and CSS that can be served from any web host, CDN, or even opened directly in a browser without a Node.js server.
+
+## Building the project
+
+<Steps>
+  <Step title="Run the build command">
+    From the repo root, execute the Vite build script:
+
+    ```bash
+    npm run build
+    ```
+
+    Vite bundles all React components, applies tree-shaking, and writes the output to `dist/`. The process typically completes in a few seconds.
+  </Step>
+
+  <Step title="Inspect the dist/ output">
+    After a successful build the `dist/` directory contains:
+
+    | Path | Description |
+    |---|---|
+    | `dist/index.html` | Root HTML shell — entry point for the `/` route |
+    | `dist/assets/main.js` | Bundled React application (all components) |
+    | `dist/assets/main.css` | All component styles, merged into one sheet |
+    | `dist/assets/jsx-runtime.js` | React JSX runtime, code-split for caching |
+    | `dist/pages/About.html` | Static HTML shell for the `/about` route |
+    | `dist/pages/Projects.html` | Static HTML shell for the `/projects` route |
+    | `dist/pages/Skills.html` | Static HTML shell for the `/skills` route |
+    | `dist/pages/Writing.html` | Static HTML shell for the `/writing` route |
+    | `dist/pages/CaseStudies.html` | Static HTML shell for the `/case-studies` route |
+    | `dist/pages/Contact.html` | Static HTML shell for the `/contact` route |
+    | `dist/.nojekyll` | Empty file that disables Jekyll on GitHub Pages |
+
+    Every HTML file references the same `assets/main.js` bundle — no per-page JavaScript is generated.
+  </Step>
+
+  <Step title="Preview locally before deploying">
+    Vite ships a production-preview server that serves the `dist/` directory exactly as a static host would:
+
+    ```bash
+    npm run preview
+    ```
+
+    The server starts on **port 4173** by default. Open [http://localhost:4173](http://localhost:4173) to verify the build before pushing anywhere.
+  </Step>
+</Steps>
+
+## What the dist/ directory contains
+
+The build output is intentionally minimal. There is no server-side rendering, no API layer, and no build artefacts beyond what a browser needs:
+
+- **One JS bundle** — `assets/main.js` contains the entire React component tree, React Router, and all application logic. Code-splitting is limited to `jsx-runtime.js` so the runtime can be cached independently.
+- **One CSS file** — `assets/main.css` merges every component stylesheet. The retro CRT and pixel-font styles are included here.
+- **HTML shells** — `index.html` at the root plus one HTML file per route under `pages/`. Each shell is a near-empty document whose only job is to mount the React app and signal which route should render (see below).
+
+Because the output is fully static, it can be deployed to GitHub Pages, Netlify, Vercel (static mode), an S3 bucket, or any plain file server.
+
+## How static HTML shells work
+
+React Router handles all navigation on the client side. When a visitor lands on a deep URL such as `https://example.com/pages/About.html`, the server must return _some_ HTML — it cannot invoke React. Each file under `pages/` solves this problem by acting as a lightweight bootstrap document.
+
+Every shell does three things:
+
+1. Loads the shared `assets/main.css` stylesheet so the page is styled immediately.
+2. Runs a small inline `<script>` that writes the intended route into the browser's hash and sets `window.__STATIC_PAGE_ROUTE__` so React Router knows which view to render without a round-trip.
+3. Loads `assets/main.js` as an ES module, which mounts the full React application into `<div id="root">`.
+
+The bootstrap script from `pages/About.html` looks like this:
+
+```javascript
+window.__STATIC_PAGE_ROUTE__ = "/about";
+if (!window.location.hash || window.location.hash === "#/" || window.location.hash === "#") {
+  window.location.hash = "/about";
+}
+```
+
+React Router reads `window.location.hash` on mount and renders the correct page component — no server configuration, no redirects, no 404s.
+
+<Tip>
+  Before deploying, open `dist/pages/About.html` directly in your browser (via `file://`) to confirm the routing bootstrap works. If the About view renders correctly without a server, every other route will behave the same way on a static host.
+</Tip>
+
+## Environment variables
+
+Vite exposes environment variables to the React bundle at **build time** through `import.meta.env`. Any variable prefixed with `VITE_` in a `.env` file is inlined into the compiled JavaScript during `npm run build`.
+
+```bash
+# .env (repo root)
+VITE_PORTFOLIO_NAME=Press Start
+VITE_CONTACT_EMAIL=hello@example.com
+```
+
+Access values inside any component:
+
+```javascript
+const name = import.meta.env.VITE_PORTFOLIO_NAME;
+```
+
+Variables without the `VITE_` prefix are **not** included in the bundle and remain private to the build environment. There is no runtime environment — once built, the values are hardcoded into `assets/main.js`. Rebuild after changing any `.env` value.

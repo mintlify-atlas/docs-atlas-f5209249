@@ -1,72 +1,63 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "Press Start",
+  "theme": "willow",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
-  },
-  "favicon": "/favicon.svg",
-  "navigation": {
-    "pages": [
-      {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
-        ]
-      }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "primary": "#39FF14",
+    "light": "#00F0FF",
+    "dark": "#060309"
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
     "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
+      "type": "github",
+      "href": "https://github.com/apursley2012/press-start"
     }
-  },
-  "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
-    ]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/apursley2012/press-start"
     }
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Overview",
+        "pages": ["introduction", "getting-started"]
+      },
+      {
+        "group": "Architecture",
+        "pages": ["architecture/project-structure", "architecture/routing", "architecture/components"]
+      },
+      {
+        "group": "Components",
+        "pages": [
+          "components/press-start-gate",
+          "components/arcade-menu",
+          "components/crt-overlay",
+          "components/high-score-table",
+          "components/pixel-sprite"
+        ]
+      },
+      {
+        "group": "Pages",
+        "pages": [
+          "pages/home",
+          "pages/about",
+          "pages/projects",
+          "pages/skills",
+          "pages/writing",
+          "pages/case-studies",
+          "pages/contact"
+        ]
+      },
+      {
+        "group": "Styling & Theming",
+        "pages": ["styling/design-tokens", "styling/animations", "styling/typography"]
+      },
+      {
+        "group": "Deployment",
+        "pages": ["deployment/static-export", "deployment/github-pages"]
+      }
+    ]
   }
 }

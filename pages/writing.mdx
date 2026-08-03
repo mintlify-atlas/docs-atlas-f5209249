@@ -1,0 +1,135 @@
+---
+title: "Writing Page — Press Start Portfolio Game Manual Archive"
+sidebarTitle: "Writing"
+description: "The Writing page displays articles as physical game manual spines in a horizontal scroll shelf. Clicking opens a full-screen paper modal with a page-turn animation."
+---
+
+The Writing page (`q` component, route `/writing`) presents articles as a horizontal shelf of game manual spines — tall, narrow cards with left-spine detailing, type badges, and colour-coded borders. Visitors scroll horizontally across the shelf and click any spine to open a full-screen **paper modal** that renders the article in a warm off-white book layout with a `pageTurn` CSS animation. The first card in the shelf is intentionally taller than the rest to give the featured article a visually dominant position.
+
+## Route
+
+`/writing`
+
+## Shelf layout
+
+The shelf is a horizontally scrollable flex container with `snap-x snap-mandatory` so cards snap to the centre of the viewport as the user scrolls. The container fills the available height (`flex-grow`) of an 80 vh page and sits between two `border-y-4` dividers. A custom scrollbar class keeps the horizontal track styled to match the arcade theme.
+
+Cards hover with `hover:-translate-y-4` for a "pick up the manual" lift effect.
+
+## Article data
+
+Articles are defined in the `$` array inside the `q` component block:
+
+```js
+const articles = [
+  {
+    id: 1,
+    title: "THE STATE MANAGEMENT DILEMMA",
+    type: "TECHNICAL",
+    date: "2023-10-15",
+    excerpt: "Why I stopped using Redux for everything and learned to love React Context again.",
+    content: "Long form content goes here. In a real app this would be markdown or fetched from a CMS. For now, imagine a deep dive into state management patterns, complete with code snippets and architectural diagrams drawn in ASCII art.",
+    color: "var(--neon-magenta)",
+  },
+  {
+    id: 2,
+    title: "DEBUGGING THE UNSEEN",
+    type: "BUG LOG",
+    date: "2023-11-02",
+    excerpt: "A 48-hour journey into a memory leak that only happened on Tuesdays.",
+    content: "It started as a routine ticket. \"App slows down after lunch.\" What followed was a descent into the madness of garbage collection, closure scopes, and eventually, a single misplaced event listener.",
+    color: "var(--neon-cyan)",
+  },
+  {
+    id: 3,
+    title: "DESIGN FOR DEVELOPERS",
+    type: "REFLECTION",
+    date: "2024-01-20",
+    excerpt: "You don't need to be an artist to make things look good. You just need rules.",
+    content: "Alignment, contrast, hierarchy. Treat design like a system, not magic. If you can write a sorting algorithm, you can learn how to use whitespace effectively.",
+    color: "var(--neon-green)",
+  },
+  {
+    id: 4,
+    title: "WHY I BUILT AN ARCADE PORTFOLIO",
+    type: "ARTICLE",
+    date: "2024-03-10",
+    excerpt: "Rejecting the minimalist bento-box trend for something with actual personality.",
+    content: "The web has become too clean. Too safe. I wanted to build something that felt like a physical object, something that demanded interaction. Here is how I built the CRT effects and managed the performance budget.",
+    color: "var(--neon-yellow)",
+  },
+];
+```
+
+### Field reference
+
+| Field     | Type   | Notes                                                            |
+|-----------|--------|------------------------------------------------------------------|
+| `id`      | number | Unique key; also drives `VOL. 01` numbering (zero-padded to 2)   |
+| `title`   | string | Uppercase; rendered in Press Start 2P on the card spine and in the modal header |
+| `type`    | string | Short category label displayed as a badge (e.g. `TECHNICAL`, `BUG LOG`, `REFLECTION`, `ARTICLE`) |
+| `date`    | string | ISO 8601 date string; displayed as `PUBLISHED: YYYY-MM-DD` in the modal |
+| `excerpt` | string | One-sentence teaser; shown on the card and as the opening bold paragraph in the modal |
+| `content` | string | Full article body; currently plain text — see note below about CMS integration |
+| `color`   | string | CSS custom property, e.g. `"var(--neon-magenta)"`; sets card border, badge colour, and title colour |
+
+### Adding an article
+
+1. Append a new object to the `$` array with the next sequential `id`.
+2. Provide all six fields. The `type` string can be anything — it appears as a raw badge label.
+3. The first card in the array renders at a larger size (`w-80 h-[28rem]` vs `w-64 h-[24rem]`). To feature a different article, move it to index `0`.
+
+<Tip>
+The current `content` field holds a plain string. For a production site, replace it with a Markdown string, a JSX tree, or a CMS slug. The modal renders content inside a `prose prose-lg` container, so standard Markdown-to-JSX libraries will style correctly without extra configuration.
+</Tip>
+
+## Card anatomy
+
+```
+┌──────────────────────────┐
+│░ TECHNICAL               │  ← type badge (top-left, accent colour)
+│                          │
+│  THE STATE MANAGEMENT    │  ← title (Press Start 2P, accent colour)
+│  DILEMMA                 │
+│                          │
+│  Why I stopped using…    │  ← excerpt (3-line clamp)
+│  VOL. 01 // 2023-10-15   │  ← vol number + date
+└──────────────────────────┘
+  ░ = left spine stripe (white/10 with right border)
+  ◢  = bottom-right decorative rotated square
+```
+
+## Article modal
+
+Clicking a card sets `selectedArticle` state to the clicked article object. The modal renders as a fixed full-screen overlay (`z-50`) with a `pageTurn` CSS keyframe animation:
+
+- **Background:** warm off-white (`#f4f4f0`) with a subtle paper-grain texture overlay.
+- **Header block:** type badge in accent colour, title in Press Start 2P, and the publication date.
+- **Body:** the `excerpt` rendered as a large bold paragraph, followed by the `content` string, then two lorem ipsum paragraphs as filler body text.
+
+Close the modal by clicking the `✕` button (top-right), which sets `selectedArticle` back to `null`.
+
+## Page-turn animation
+
+The modal container has `animate-[pageTurn_0.5s_ease-out]` applied on mount. The `pageTurn` keyframe is defined in the global CSS:
+
+```css
+@keyframes pageTurn {
+  from {
+    transform: perspective(1200px) rotateY(-20deg);
+    opacity: 0;
+  }
+  to {
+    transform: perspective(1200px) rotateY(0deg);
+    opacity: 1;
+  }
+}
+```
+
+<Note>
+The modal does not trap keyboard focus or restore focus to the triggering card on close. If accessibility is a priority, add a focus-trap and restore focus to the card element after the modal unmounts.
+</Note>
+
+## Horizontal scroll on touch devices
+
+The shelf uses `-webkit-overflow-scrolling: touch` behaviour via Tailwind's `overflow-x-auto` and `snap-x`. On iOS Safari, momentum scrolling is automatic. On desktop, horizontal scroll works with a trackpad two-finger swipe or by holding **Shift** and using the mouse wheel.

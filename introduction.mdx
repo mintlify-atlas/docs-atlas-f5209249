@@ -1,0 +1,106 @@
+---
+title: "Press Start: Retro Arcade React Portfolio — Overview"
+sidebarTitle: "Introduction"
+description: "An overview of Press Start, a retro arcade-themed React 18 SPA portfolio with CRT effects, neon palette, keyboard navigation, and pixel animations."
+---
+
+Press Start is a single-page portfolio application built to look and feel like a 1980s arcade cabinet. Every screen is wrapped in an authentic CRT overlay, navigation snaps between routes with scanline transitions, and a blinking **PRESS START** gate greets visitors before they can explore the content. The entire UI runs on a black background with neon-green, magenta, and cyan accents — keeping the visual language tight and unmistakably retro.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card
+    title="Press Start Gate"
+    icon="gamepad"
+    href="/components/press-start-gate"
+  >
+    Full-screen entry screen with the classic "PRESS START" prompt. Fades out with a screen-flash effect when dismissed, then reveals the main application.
+  </Card>
+  <Card
+    title="Keyboard-Navigable Arcade Menu"
+    icon="keyboard"
+    href="/components/arcade-menu"
+  >
+    The sticky top navigation supports full arrow-key traversal. Press `ArrowRight` or `ArrowDown` to advance to the next route; `ArrowLeft` or `ArrowUp` to go back.
+  </Card>
+  <Card
+    title="Design Tokens & Styling"
+    icon="palette"
+    href="/styling/design-tokens"
+  >
+    A hand-tuned neon palette exposed as both CSS custom properties (`--neon-green`, `--neon-magenta`, `--neon-cyan`) and Tailwind custom tokens (`arcade-green`, `arcade-magenta`, `arcade-cyan`).
+  </Card>
+  <Card
+    title="Project Structure"
+    icon="folder-open"
+    href="/architecture/project-structure"
+  >
+    Vite-bundled React SPA with static HTML page shells in `/pages/` for GitHub Pages client-side routing compatibility.
+  </Card>
+  <Card
+    title="CRT Overlay & Effects"
+    icon="display"
+    href="/components/crt-overlay"
+  >
+    Persistent screen-wide scanline animation, RGB-split text distortion (`crt-rgb-split`), and a radial vignette rendered via a fixed-position overlay component.
+  </Card>
+  <Card
+    title="Getting Started"
+    icon="rocket"
+    href="/getting-started"
+  >
+    Clone, install, and run the dev server in under two minutes. Everything is zero-config out of the box thanks to Vite and Tailwind JIT.
+  </Card>
+</CardGroup>
+
+## Tech Stack
+
+| Technology | Version | Role |
+|---|---|---|
+| React | 18 | UI rendering and component model |
+| React Router | v6 | Client-side routing (`BrowserRouter`, `Routes`, `Route`) |
+| Vite | Latest | Dev server, HMR, and production bundler |
+| Tailwind CSS | v3 (JIT) | Utility-first styling with custom arcade design tokens |
+| Google Fonts — Press Start 2P | — | Pixel-art headings and UI labels |
+| Google Fonts — VT323 | — | Retro monospace body text and stat displays |
+| Google Fonts — Inter | — | Readable body copy for long-form content |
+| Lucide React | v0.522.0 | Icon set (GitHub, LinkedIn, Mail, Play, Code, BookOpen) |
+
+## Arcade Aesthetic
+
+The visual identity of Press Start is built on four interlocking layers.
+
+**CRT Overlay.** The `CRTOverlay` component renders a fixed full-screen layer with a looping `.animate-scanline` bar and a radial vignette. This sits above every page at `z-index: 9999` without capturing pointer events.
+
+**Neon Palette.** All color decisions flow from four CSS custom properties defined in `main.css` and mirrored as Tailwind tokens:
+
+| Token | CSS Variable | Hex |
+|---|---|---|
+| `arcade-green` | `--neon-green` | `#39FF14` |
+| `arcade-magenta` | `--neon-magenta` | `#FF0099` |
+| `arcade-cyan` | `--neon-cyan` | `#00F0FF` |
+| `arcade-black` | `--bg-color` | `#060309` |
+
+Glow effects are applied via utility classes — `.glow-green`, `.glow-magenta`, `.glow-cyan` — which wrap the corresponding `text-shadow` declarations for neon bloom.
+
+**Keyboard Navigation.** `ArcadeMenu` attaches a global `keydown` listener that maps arrow keys to route transitions via React Router's `useNavigate`. The active route is indicated by a blinking magenta `►` marker and a magenta bottom border.
+
+**Pixel Animations.** Several keyframe animations are compiled into Tailwind's output and available as utility classes: `.animate-blink` (step-end cursor flash), `.animate-scanline` (top-to-bottom scan), `.animate-flicker` (screen flicker at 15 fps), and `pixel-border-green` / `pixel-border-magenta` (hard-shadow pixel borders).
+
+## Pages
+
+The app ships with seven routes, all rendered inside a shared layout that includes `ArcadeMenu`, `CRTOverlay`, and a page-transition wrapper:
+
+| Route | Page Component | Purpose |
+|---|---|---|
+| `/` | `HomePage` | Hero with developer name, `HighScoreTable`, and `PixelSprite` |
+| `/about` | `AboutPage` | Origin story chapters with intersection-observer reveal animations |
+| `/projects` | `ProjectsPage` | Game-select card grid with a 3-D tilt hover and modal detail view |
+| `/skills` | `SkillsPage` | Player stats with animated XP counter and pixel skill bars |
+| `/writing` | `WritingPage` | Horizontal scroll shelf of game-manual-style writing cards |
+| `/case-studies` | `CaseStudiesPage` | Boss-battle log with a scrolling HP bar sidebar |
+| `/contact` | `ContactPage` | Coin-insert contact form with a multi-step submission animation |
+
+<Note>
+  All page content — project titles, case study narratives, writing excerpts, skill levels, and the origin story chapters — is defined as static data arrays inside the source bundle. To personalise the portfolio, locate those arrays in your source files and replace the placeholder entries with your own content before building for production.
+</Note>

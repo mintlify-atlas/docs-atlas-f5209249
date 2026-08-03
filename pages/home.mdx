@@ -1,0 +1,94 @@
+---
+title: "Home Page — Press Start Portfolio"
+sidebarTitle: "Home"
+description: "The landing screen of the Press Start portfolio. Displays a live HighScoreTable of career stats and an animated PixelSprite walking across the bottom of the viewport."
+---
+
+The Home page is the first screen a visitor sees after pressing **START** on the gate screen. It opens with the developer's name rendered in large pixel typography, a one-liner bio in arcade-cyan, and two key components — a **HighScoreTable** that surfaces career stats as arcade high-score entries, and a **PixelSprite** that animates across the bottom of the viewport like a character between stages. The combined effect communicates personality and at-a-glance credibility before the visitor has scrolled a single pixel.
+
+## Route
+
+`/` (root)
+
+## Layout
+
+The Home component (`H` in the bundle) renders a single full-height centered column:
+
+1. **Hero heading** — developer name in Press Start 2P font with a neon-green stroke and magenta drop shadow, plus a subtle gradient overlay for a CRT bloom effect.
+2. **Tagline** — two lines in VT323 font: `"Software developer. Player one."` and `"Currently grinding side quests."` in arcade-muted.
+3. **HighScoreTable** — positioned below the hero text; pulls from a static data array inside `HighScoreTable.js`.
+4. **PixelSprite** — rendered after the table; walks across the bottom of the section.
+
+## HighScoreTable data
+
+The table maps short arcade-style codes to human-readable labels and numeric values. The data is defined inside `components/HighScoreTable.js` (not in `main.js`), but the rendered scores match this shape:
+
+```js
+const scores = [
+  { code: "YRS", label: "YEARS CODING",      value: 5    },
+  { code: "PRJ", label: "PROJECTS SHIPPED",  value: 42   },
+  { code: "PPR", label: "PAPERS WRITTEN",    value: 12   },
+  { code: "COF", label: "COFFEES CONSUMED",  value: 9999 },
+  { code: "BUG", label: "BUGS SQUASHED",     value: 404  },
+];
+```
+
+### Changing score entries
+
+Open `components/HighScoreTable.js` and update the values in that array. Each entry needs:
+
+| Field   | Type   | Notes                                        |
+|---------|--------|----------------------------------------------|
+| `code`  | string | 3–4 uppercase chars; appears in left column  |
+| `label` | string | Full description; appears on hover or inline |
+| `value` | number | Rendered right-aligned with zero-padding     |
+
+<Tip>
+Keep `code` values to four characters or fewer — the table uses a fixed-width pixel font and longer codes break the column alignment.
+</Tip>
+
+## PixelSprite
+
+The `PixelSprite` component renders a small pixel-art character and translates it across the `x`-axis using a CSS animation. There is no data to configure — the sprite dimensions and animation speed are controlled by CSS custom properties inside `components/PixelSprite.js`.
+
+To change the walk cycle speed, update the `--sprite-duration` CSS variable in that file. To swap the sprite art, replace the pixel grid or `<canvas>` definition in the component.
+
+## IntersectionObserver trigger
+
+The HighScoreTable uses an `IntersectionObserver` to kick off its count-up animation the first time the table enters the viewport. This means the numbers tick up from zero even if the visitor scrolls down before the page finishes loading. The observer disconnects after the first intersection so the animation plays only once per page load.
+
+```js
+// Approximate pattern used inside HighScoreTable.js
+const observer = new IntersectionObserver(
+  ([entry]) => {
+    if (entry.isIntersecting) {
+      startCountUp();
+      observer.disconnect();
+    }
+  },
+  { threshold: 0.2 }
+);
+observer.observe(tableRef.current);
+```
+
+<Note>
+The `threshold: 0.2` value means the animation fires when 20 % of the table is visible. Lower the threshold if the table sits near the fold on small screens and the animation never triggers.
+</Note>
+
+## Customising the hero text
+
+The heading text `"DEV NAME"` and the tagline are hardcoded in the `H` component in `main.js`. Replace those string literals to set the real name and bio line:
+
+```jsx
+// In the H component, find and update:
+children: "DEV NAME"
+
+// And the tagline p element:
+"Software developer. Player one."
+"Currently grinding side quests."
+```
+
+## Related components
+
+- [HighScoreTable](/components/high-score-table) — full API reference for the score table, including animation timing props.
+- [PixelSprite](/components/pixel-sprite) — documentation for the walking sprite animation and customisation options.

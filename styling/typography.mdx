@@ -1,0 +1,196 @@
+---
+title: "Typography: Three-Font Pixel & Prose System"
+sidebarTitle: "Typography"
+description: "Press Start's three-font system — Press Start 2P, VT323, and Inter — covering Tailwind classes, Google Fonts loading, color pairings, and JSX examples."
+---
+
+Press Start uses a deliberate three-tier type system that layers pixel-art headings, retro monospace labels, and clean sans-serif body copy. Each font occupies a distinct role in the hierarchy — none of the three are interchangeable — and together they create the contrast between "arcade cabinet" and "readable portfolio" that defines the project's visual voice.
+
+---
+
+## Font Family Overview
+
+All three fonts are loaded from Google Fonts via a single `@import` declaration at the top of `main.css`, and each is mapped to a custom Tailwind `font-*` utility class.
+
+```css
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Press+Start+2P&family=VT323&display=swap";
+```
+
+| Font Family | Tailwind Class | Google Fonts Name | Category | Role |
+|---|---|---|---|---|
+| Press Start 2P | `font-press` | `Press+Start+2P` | Display / Pixel | H1/H2 headings, button labels, game messages |
+| VT323 | `font-vt323` | `VT323` | Monospace / Pixel | Scores, labels, form fields, secondary pixel text |
+| Inter | `font-inter` | `Inter` | Sans-serif | Body copy, article prose, paragraph text |
+
+The `display=swap` parameter on the Google Fonts URL ensures text renders in a system fallback font immediately and swaps to the custom font once loaded, preventing invisible text during the font download.
+
+---
+
+## Press Start 2P
+
+Press Start 2P is the primary display font — a bitmap-style typeface modelled on the character ROM of 1980s arcade hardware. It renders at a fixed pixel grid and is best used large and sparse.
+
+- **Tailwind class:** `font-press`
+- **CSS declaration:** `font-family: "Press Start 2P", cursive`
+- **Loaded weights:** Regular (400) — the font has a single weight
+- **Recommended sizes:** `text-xs` through `text-5xl` depending on context; avoid `text-base` for multi-line text as the letter-spacing becomes crowded
+- **Best paired with:** `text-arcade-green`, `text-arcade-magenta`, `glow-green`, `glow-magenta`, `uppercase`
+
+**Typical use cases:**
+
+| Use Case | Example Classes |
+|---|---|
+| Page title / hero heading | `font-press text-arcade-green glow-green text-4xl md:text-7xl` |
+| Section heading (H2) | `font-press text-arcade-magenta text-sm uppercase` |
+| Button label | `font-press text-arcade-black text-xs uppercase` |
+| "GAME OVER" message | `font-press text-arcade-magenta glow-magenta text-3xl` |
+| Nav link | `font-press text-arcade-green text-xs tracking-widest` |
+
+```jsx
+<h1 className="font-press text-arcade-green glow-green text-4xl md:text-7xl uppercase">
+  PRESS START
+</h1>
+
+<h2 className="font-press text-arcade-magenta text-sm uppercase mb-4">
+  ABOUT ME
+</h2>
+
+<button className="font-press text-arcade-black bg-arcade-green text-xs px-6 py-3 uppercase pixel-border-green">
+  VIEW PROJECTS
+</button>
+
+<p className="font-press text-arcade-magenta glow-magenta text-3xl text-center">
+  GAME OVER
+</p>
+```
+
+---
+
+## VT323
+
+VT323 is modelled after the character set of DEC VT100 terminals. It is monospace, highly legible at medium sizes, and retains a pixel-art character without the tight spacing limitations of Press Start 2P. Use it for anything that should feel like a readout, score, or system label.
+
+- **Tailwind class:** `font-vt323`
+- **CSS declaration:** `font-family: VT323, monospace`
+- **Loaded weights:** Regular (400)
+- **Recommended sizes:** `text-lg` through `text-4xl`; the font is designed to be read at screen size and looks best at 20px+
+- **Best paired with:** `text-arcade-muted`, `text-arcade-cyan`, `text-arcade-white`, `tracking-widest`
+
+**Typical use cases:**
+
+| Use Case | Example Classes |
+|---|---|
+| High score readout | `font-vt323 text-arcade-yellow text-2xl` |
+| Form field label | `font-vt323 text-arcade-muted text-xl` |
+| Status / badge text | `font-vt323 text-arcade-cyan text-lg uppercase` |
+| Section subtitle | `font-vt323 text-arcade-white/80 text-2xl` |
+| Keyboard shortcut hint | `font-vt323 text-arcade-muted text-xl tracking-widest` |
+
+```jsx
+<p className="font-vt323 text-arcade-yellow text-2xl tracking-widest">
+  HI-SCORE: 99900
+</p>
+
+<label className="font-vt323 text-arcade-muted text-xl uppercase">
+  YOUR NAME
+</label>
+
+<span className="font-vt323 text-arcade-cyan text-lg border border-arcade-cyan px-2 py-0.5">
+  STAGE 03
+</span>
+```
+
+---
+
+## Inter
+
+Inter is a neutral, screen-optimised sans-serif that handles extended reading comfortably. It is the only font in the system that is not pixel-derived, and its purpose is specifically to make long-form content — project descriptions, blog posts, about-page prose — legible without arcade-induced eye strain.
+
+- **Tailwind class:** `font-inter`
+- **CSS declaration:** `font-family: Inter, sans-serif`
+- **Loaded weights:** 400 (regular) and 600 (semibold)
+- **Recommended sizes:** `text-sm` through `text-lg`
+- **Best paired with:** `text-arcade-white`, `text-arcade-white/80`, `leading-relaxed`, `leading-loose`
+
+**Typical use cases:**
+
+| Use Case | Example Classes |
+|---|---|
+| Body paragraph | `font-inter text-arcade-white/80 leading-relaxed` |
+| Project description card | `font-inter text-arcade-white text-sm leading-relaxed line-clamp-3` |
+| Article / blog post prose | `font-inter text-arcade-white leading-loose text-base` |
+| Form input text | `font-inter text-arcade-white text-sm` |
+
+```jsx
+<p className="font-inter text-arcade-white/80 leading-relaxed text-sm">
+  A full-stack developer with a passion for building fast, accessible
+  web applications. Currently focused on React, TypeScript, and creative
+  frontend engineering.
+</p>
+
+<p className="font-inter text-arcade-white text-sm leading-relaxed line-clamp-3">
+  {project.description}
+</p>
+```
+
+---
+
+## How Fonts Are Loaded
+
+The three fonts are imported from Google Fonts at the very top of `main.css` using a single consolidated URL. The `display=swap` strategy is baked in.
+
+```css
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Press+Start+2P&family=VT323&display=swap";
+```
+
+This single request fetches all three families in one round-trip, keeping network overhead minimal. Tailwind then maps them through the custom `fontFamily` theme extension:
+
+```js
+// tailwind.config.js (conceptual — derived from compiled output)
+theme: {
+  extend: {
+    fontFamily: {
+      press:  ['"Press Start 2P"', 'cursive'],
+      vt323:  ['VT323', 'monospace'],
+      inter:  ['Inter', 'sans-serif'],
+    },
+  },
+},
+```
+
+---
+
+## Text Color Tokens
+
+The arcade color palette integrates directly with all three fonts. The table below maps the most common color–font combinations used in the project.
+
+| Tailwind Color Class | Hex | Used With | Example Context |
+|---|---|---|---|
+| `text-arcade-green` | `#39FF14` | `font-press` | Primary headings, active nav links |
+| `text-arcade-magenta` | `#FF0099` | `font-press` | Secondary headings, error states, "GAME OVER" |
+| `text-arcade-cyan` | `#00F0FF` | `font-press`, `font-vt323` | Info labels, stage counters, links |
+| `text-arcade-yellow` | `#FFEA00` | `font-vt323` | Score readouts, warnings |
+| `text-arcade-muted` | `#7CFF8A` | `font-vt323` | Subdued labels, placeholder text, hints |
+| `text-arcade-white` | `#F5FFF5` | `font-inter`, `font-vt323` | Body text, card prose |
+| `text-arcade-white/80` | `#F5FFF5` at 80% | `font-inter` | Muted body text, descriptions |
+
+---
+
+## Selection Highlight
+
+Selected text across the entire page uses a magenta background with white text — a neon inversion of the default browser selection color that keeps the arcade feel even in reading mode.
+
+```css
+body ::selection {
+  background: var(--neon-magenta); /* #FF0099 */
+  color: var(--text-white);        /* #F5FFF5 */
+}
+```
+
+This is also available as composable Tailwind utilities for components that need to enforce it explicitly:
+
+```jsx
+<p className="selection:bg-arcade-magenta selection:text-white font-inter text-arcade-white leading-relaxed">
+  Selectable body text with magenta highlight.
+</p>
+```

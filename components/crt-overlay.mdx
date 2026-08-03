@@ -1,0 +1,102 @@
+---
+title: "CRTOverlay – Scanline and Vignette Screen Effect"
+sidebarTitle: "CRTOverlay"
+description: "Fixed-position CRT scanline and radial vignette overlay with a toggle button, respecting prefers-reduced-motion for accessible use."
+---
+
+`CRTOverlay` layers two always-on-top visual effects over the entire page to simulate the look of an old cathode-ray tube monitor: a repeating scanline gradient and a dark radial vignette that dims the corners of the screen. A small toggle button in the bottom-right corner lets the visitor switch the effects on or off, and the component automatically disables them when the operating system's `prefers-reduced-motion` setting is active.
+
+## Props
+
+This component accepts no props. All state — whether the overlay is currently visible — is managed internally with `React.useState`.
+
+## Usage
+
+```jsx
+import CRTOverlay from './components/CRTOverlay';
+
+// Mount once at the root of your app, outside any scrolling containers
+function App() {
+  return (
+    <>
+      <CRTOverlay />
+      <Router>
+        <Layout />
+      </Router>
+    </>
+  );
+}
+```
+
+## Overlay layers
+
+The component renders two visual layers plus one interactive element:
+
+### 1. Scanline gradient (`z-[9999]`)
+
+A `fixed inset-0` div with the CSS class `crt-overlay`. This class applies a repeating linear gradient background at `background-size: 100% 4px` to draw horizontal scanlines across the full viewport. It is composited with `mix-blend-overlay opacity-70` so the underlying content remains legible.
+
+```css
+/* globals.css */
+.crt-overlay {
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15) 0px,
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  background-size: 100% 4px;
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.5);
+}
+```
+
+Inside this div sits a child `div` that renders the radial vignette:
+
+```css
+/* Tailwind inline equivalent */
+background: radial-gradient(circle at center, transparent 50%, rgba(0,0,0,0.4) 100%)
+```
+
+### 2. Toggle button (`z-[10000]`)
+
+A `fixed bottom-4 right-4` button that sits one z-index step above the overlay layers so it is always clickable. It uses two icons from `lucide-react`:
+
+- **`MonitorOff`** — shown when the CRT effect is active (click to disable)
+- **`MonitorPlay`** — shown when the CRT effect is inactive (click to enable)
+
+The button label `CRT FX: ON / OFF` is hidden on small viewports (`hidden sm:inline`) to keep the UI clean on mobile.
+
+## Reduced-motion behaviour
+
+During mount, the component runs:
+
+```jsx
+useEffect(() => {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    setEnabled(false);
+  }
+}, []);
+```
+
+When `enabled` is `false`, the scanline and vignette divs are not rendered at all — the effect is not merely paused but entirely removed from the DOM.
+
+<Note>
+  `CRTOverlay` should be mounted at the application root, outside any
+  overflow-hidden containers. Because both layers use `position: fixed`, they
+  always cover the full viewport regardless of scroll position. Placing the
+  component inside a clipped container will cause it to be cropped.
+</Note>
+
+## Customization
+
+<Tip>
+  The scanline density is controlled by the `background-size: 100% 4px` value
+  in `.crt-overlay` — increase the pixel value (e.g. `6px`) for wider scanlines
+  with more visible gaps. Adjust `opacity-70` on the overlay wrapper to make
+  the effect more or less subtle without touching the CSS class.
+
+  The vignette radius (`50%`) and maximum opacity (`0.4`) are set inline via
+  the Tailwind arbitrary value. Replace them with CSS custom properties in
+  `globals.css` if you want to expose them as design tokens.
+</Tip>

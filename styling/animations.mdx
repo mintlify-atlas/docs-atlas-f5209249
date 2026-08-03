@@ -1,0 +1,276 @@
+---
+title: "Animations: Keyframes & Motion Utilities in Press Start"
+sidebarTitle: "Animations"
+description: "Reference for all eight Press Start animation utilities — keyframe behavior, duration, class names, and prefers-reduced-motion accessibility handling."
+---
+
+Press Start uses eight distinct animation utilities to reinforce the arcade aesthetic: cursor blinks, CRT scanlines, screen flickers, entrance transitions, and a looping sprite walk cycle. All animations are declared as CSS `@keyframes` in `main.css` and exposed either as Tailwind utility classes or as custom CSS classes applied directly in JSX.
+
+---
+
+## Animation Reference
+
+### `blink`
+
+A hard-cut opacity toggle that mimics a cursor or indicator light. Uses `step-end` timing so the transition is instantaneous rather than eased.
+
+```css
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+```
+
+| Property | Value |
+|---|---|
+| Class | `animate-blink` |
+| Duration | `1s` |
+| Timing | `step-end` |
+| Iteration | `infinite` |
+| Typical Use | Blinking cursors, "INSERT COIN" prompts, active nav indicators |
+
+```jsx
+<span className="animate-blink text-arcade-green font-press text-xs">▮</span>
+```
+
+---
+
+### `scanline`
+
+Moves a horizontal scanline band from the top to the bottom of its container. Used inside `.crt-overlay` to simulate the electron beam sweep of a CRT display.
+
+```css
+@keyframes scanline {
+  0%  { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+```
+
+| Property | Value |
+|---|---|
+| Class | `animate-scanline` |
+| Duration | `8s` |
+| Timing | `linear` |
+| Iteration | `infinite` |
+| Typical Use | CRT overlay beam, monitor startup effect |
+
+```jsx
+<div className="crt-overlay">
+  <div className="animate-scanline absolute inset-x-0 h-1 bg-white/5" />
+</div>
+```
+
+---
+
+### `flicker`
+
+Rapidly oscillates opacity between `0.95` and `0.85` to simulate voltage instability on an aging CRT monitor. Can be applied via the `.crt-flicker` CSS class or the `.animate-flicker` Tailwind utility.
+
+```css
+@keyframes flicker {
+  0%   { opacity: 0.95; }
+  50%  { opacity: 0.85; }
+  100% { opacity: 0.95; }
+}
+```
+
+| Property | Value |
+|---|---|
+| Classes | `animate-flicker`, `crt-flicker` |
+| Duration | `0.15s` |
+| Timing | `linear` |
+| Iteration | `infinite` |
+| Typical Use | CRT monitor wrapper, loading screens, glitch effects |
+
+```jsx
+<section className="crt-flicker">
+  <p className="font-press text-arcade-green">LOADING…</p>
+</section>
+```
+
+---
+
+### `pulse-fast`
+
+The standard Tailwind `pulse` keyframe (50% opacity at the midpoint) running at double speed — `1s` instead of the default `2s`. Useful for urgent or time-sensitive UI indicators.
+
+```css
+/* Tailwind's built-in pulse keyframe at 1s */
+.animate-pulse-fast {
+  animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+```
+
+| Property | Value |
+|---|---|
+| Class | `animate-pulse-fast` |
+| Duration | `1s` |
+| Timing | `cubic-bezier(0.4, 0, 0.6, 1)` |
+| Iteration | `infinite` |
+| Typical Use | Urgent status badges, "PRESS START" prompt, health warnings |
+
+```jsx
+<span className="animate-pulse-fast text-arcade-magenta font-press text-xs uppercase">
+  LOW HEALTH
+</span>
+```
+
+---
+
+### `walk`
+
+Translates an element horizontally from its natural position to `-100%`, producing an infinite sideways scroll. Designed for sprite sheets or marquee strips where the element's width equals one full loop cycle.
+
+```css
+@keyframes walk {
+  0%   { transform: translate(0); }
+  100% { transform: translate(-100%); }
+}
+```
+
+| Property | Value |
+|---|---|
+| Class | `animate-[walk_10s_linear_infinite]` (arbitrary value) |
+| Duration | `10s` |
+| Timing | `linear` |
+| Iteration | `infinite` |
+| Typical Use | Scrolling sprite strips, parallax background layers |
+
+```jsx
+<div className="overflow-hidden w-full">
+  <div className="animate-[walk_10s_linear_infinite] flex whitespace-nowrap">
+    {/* Duplicate content to create seamless loop */}
+    <img src="/sprites/walk-strip.png" alt="" className="crisp-edges h-16" />
+    <img src="/sprites/walk-strip.png" alt="" className="crisp-edges h-16" />
+  </div>
+</div>
+```
+
+---
+
+### `dropIn`
+
+An entrance animation where an element falls from above, slightly overshoots, and fades out — giving the impression of a coin or token being inserted. Runs once and holds its final frame (`forwards` fill mode).
+
+```css
+@keyframes dropIn {
+  0%  { transform: translateY(-100px) scale(1.5); opacity: 0; }
+  50% { transform: translateY(10px)   scale(1);   opacity: 1; }
+  100% { transform: translateY(0)     scale(1);   opacity: 0; }
+}
+```
+
+| Property | Value |
+|---|---|
+| Class | `animate-[dropIn_0.5s_ease-in_forwards]` (arbitrary value) |
+| Duration | `0.5s` |
+| Timing | `ease-in` |
+| Iteration | `1` (fill: `forwards`) |
+| Typical Use | Coin insert flash, score pop-ups, achievement notifications |
+
+```jsx
+<div className="animate-[dropIn_0.5s_ease-in_forwards] text-arcade-yellow font-press text-2xl">
+  +100
+</div>
+```
+
+---
+
+### `pageTurn`
+
+Rotates an element in from the left edge using a 3-D perspective transform, replicating the look of a page turning in an arcade attract sequence or section transition.
+
+```css
+@keyframes pageTurn {
+  0%  {
+    transform: perspective(1000px) rotateY(-90deg);
+    transform-origin: left;
+    opacity: 0;
+  }
+  100% {
+    transform: perspective(1000px) rotateY(0deg);
+    transform-origin: left;
+    opacity: 1;
+  }
+}
+```
+
+| Property | Value |
+|---|---|
+| Class | `animate-[pageTurn_0.5s_ease-out]` (arbitrary value) |
+| Duration | `0.5s` |
+| Timing | `ease-out` |
+| Iteration | `1` |
+| Typical Use | Section reveal transitions, modal entrances, card flips |
+
+```jsx
+<div className="animate-[pageTurn_0.5s_ease-out] bg-arcade-black border-2 border-arcade-cyan p-6">
+  <h2 className="font-press text-arcade-cyan glow-cyan text-sm">STAGE CLEAR</h2>
+</div>
+```
+
+---
+
+### `slideUp`
+
+Fades an element in while translating it upward `20px`, producing a clean content-reveal entrance. The shortest animation in the set at `0.3s`.
+
+```css
+@keyframes slideUp {
+  0%  { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0);   opacity: 1; }
+}
+```
+
+| Property | Value |
+|---|---|
+| Class | `animate-[slideUp_0.3s_ease-out]` (arbitrary value) |
+| Duration | `0.3s` |
+| Timing | `ease-out` |
+| Iteration | `1` |
+| Typical Use | List item reveals, skill tag entrances, form field appearance |
+
+```jsx
+<li className="animate-[slideUp_0.3s_ease-out] text-arcade-white font-inter">
+  React · TypeScript · Tailwind CSS
+</li>
+```
+
+---
+
+## Accessibility: Reduced Motion
+
+Users who have enabled the "Reduce motion" preference in their operating system will have all looping and decorative animations automatically suppressed. The following media query is applied globally in `main.css`:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  .crt-overlay,
+  .crt-flicker,
+  .animate-blink,
+  .animate-scanline,
+  .animate-pulse-fast,
+  .animate-walk {
+    animation: none !important;
+    background: none !important;
+    box-shadow: none !important;
+  }
+}
+```
+
+The six affected classes are those with `infinite` iteration counts — the ones most likely to cause discomfort for users with vestibular disorders. One-shot entrance animations (`dropIn`, `pageTurn`, `slideUp`) are not suppressed because they complete quickly and do not loop.
+
+| Animation Class | Suppressed Under Reduced Motion |
+|---|---|
+| `crt-overlay` | Yes — scanlines and vignette removed |
+| `crt-flicker` | Yes — flicker stopped |
+| `animate-blink` | Yes |
+| `animate-scanline` | Yes |
+| `animate-pulse-fast` | Yes |
+| `animate-[walk_10s_linear_infinite]` | Yes (targets `.animate-walk`) |
+| `animate-[dropIn_0.5s_ease-in_forwards]` | No — one-shot entrance |
+| `animate-[pageTurn_0.5s_ease-out]` | No — one-shot entrance |
+| `animate-[slideUp_0.3s_ease-out]` | No — one-shot entrance |
+
+<Note>
+Never rely on animation alone to convey critical information. State changes, error conditions, and navigation feedback must also be communicated through visible text, color contrast, or ARIA attributes so the UI remains fully usable when all animations are disabled.
+</Note>

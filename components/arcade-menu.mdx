@@ -1,0 +1,102 @@
+---
+title: "ArcadeMenu – Retro Arcade Navigation Bar Component"
+sidebarTitle: "ArcadeMenu"
+description: "Sticky top navigation bar styled as an arcade cabinet menu, with keyboard arrow-key routing and a blinking caret on the active route."
+---
+
+`ArcadeMenu` is the site-wide navigation bar, styled to look like the selection screen of a classic arcade cabinet. It reads the current route from React Router's `useLocation` hook and highlights the matching item with a green glow and a magenta underline. Visitors can cycle through routes entirely from the keyboard using the arrow keys, making the interface feel like flipping through cabinet options with a joystick.
+
+## Props
+
+This component accepts no props. All routing state is derived internally via React Router's `useLocation` and `useNavigate` hooks.
+
+## Usage
+
+```jsx
+import ArcadeMenu from './components/ArcadeMenu';
+
+// Place inside a React Router context at the top of your layout
+function Layout({ children }) {
+  return (
+    <>
+      <ArcadeMenu />
+      <main>{children}</main>
+    </>
+  );
+}
+```
+
+## Navigation items
+
+The component defines a static `navItems` array with seven routes:
+
+| Path | Label |
+|---|---|
+| `/` | HOME |
+| `/about` | ABOUT |
+| `/projects` | PROJECTS |
+| `/skills` | SKILLS |
+| `/writing` | WRITING |
+| `/case-studies` | CASE STUDIES |
+| `/contact` | CONTACT |
+
+## Keyboard navigation
+
+A `keydown` listener is attached to `window` inside a `useEffect` (cleaned up on unmount). The handler finds the index of the current pathname in `navItems` and then:
+
+- **`ArrowRight` or `ArrowDown`** — navigates to `navItems[(currentIndex + 1) % navItems.length]`
+- **`ArrowLeft` or `ArrowUp`** — navigates to `navItems[(currentIndex - 1 + navItems.length) % navItems.length]`
+
+Both directions call `event.preventDefault()` to stop the browser from scrolling the page. Wrapping is handled by the modulo arithmetic, so pressing left on HOME brings you to CONTACT.
+
+```jsx
+// Simplified keyboard handler (from source)
+const handleKeyDown = (e) => {
+  const currentIndex = navItems.findIndex(item => item.path === location.pathname);
+
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    const next = (currentIndex + 1) % navItems.length;
+    navigate(navItems[next].path);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const prev = (currentIndex - 1 + navItems.length) % navItems.length;
+    navigate(navItems[prev].path);
+  }
+};
+```
+
+## Active vs. inactive styling
+
+Each nav item is a React Router `<Link>` rendered with conditional classes:
+
+| State | Text color | Caret (`►`) | Bottom border |
+|---|---|---|---|
+| Active | `text-arcade-green glow-green` | `opacity-100 animate-blink text-arcade-magenta` | `border-b-2 border-arcade-magenta` |
+| Inactive | `text-arcade-muted` | `opacity-0 group-hover:opacity-50` | `border-b-2 border-transparent` |
+| Inactive (hover) | `hover:text-arcade-white` | fades in at 50 % | `border-b-2 border-transparent` |
+
+The caret character `►` is placed in a fixed-width `w-4` inline block so label text does not shift when the caret appears or disappears.
+
+## Layout & stacking
+
+The `<nav>` element carries `sticky top-0 z-40` so it stays at the top of the viewport while the user scrolls. The bottom border is `border-b-4 border-arcade-green/30`, giving a subtle green scan-line separator. Inner content is a responsive `flex-wrap` row centred with `max-w-6xl mx-auto` and `gap-x-6 gap-y-4` to handle narrow viewports gracefully.
+
+<Note>
+  The keyboard listener fires on every `keydown` event at the window level.
+  If your app has modal dialogs or other keyboard-sensitive widgets, consider
+  adding a guard so the handler only runs when no modal is open.
+</Note>
+
+## Customization
+
+<Tip>
+  To add or remove routes, edit the `navItems` array at the top of
+  `ArcadeMenu.js`. The keyboard navigation and active-state logic are both
+  driven by the same array, so a single change updates all three behaviours
+  simultaneously.
+
+  The `font-vt323` class controls the retro terminal typeface. Replace it with
+  `font-press` (Press Start 2P) for a chunkier arcade look, or any other
+  custom font registered in your Tailwind config.
+</Tip>

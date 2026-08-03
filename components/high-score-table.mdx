@@ -1,0 +1,98 @@
+---
+title: "HighScoreTable – Animated Arcade Stats Leaderboard"
+sidebarTitle: "HighScoreTable"
+description: "Scroll-triggered animated leaderboard displaying five hardcoded career stats as arcade high scores with eased counter animations and staggered row entries."
+---
+
+`HighScoreTable` presents five career statistics styled as an arcade leaderboard. Each row slides in from the left and its score counts up from zero using a smooth quartic-ease animation, but only once the component has scrolled into the viewport — courtesy of an `IntersectionObserver`. The result is a memorable, gamified way to communicate experience metrics without relying on traditional CV formatting.
+
+## Props
+
+This component accepts no props. The score data is hardcoded inside the component and the animation is triggered automatically by scroll position.
+
+## Usage
+
+```jsx
+import HighScoreTable from './components/HighScoreTable';
+
+// Drop it anywhere in a scrollable page
+function AboutPage() {
+  return (
+    <section>
+      <h2>By The Numbers</h2>
+      <HighScoreTable />
+    </section>
+  );
+}
+```
+
+## Score data
+
+The component contains a static array of five entries:
+
+| Rank | Initials | Score | Label |
+|---|---|---|---|
+| 1 | YRS | 5 | YEARS CODING |
+| 2 | PRJ | 42 | PROJECTS SHIPPED |
+| 3 | PPR | 12 | PAPERS WRITTEN |
+| 4 | COF | 9999 | COFFEES CONSUMED |
+| 5 | BUG | 404 | BUGS SQUASHED |
+
+Scores are displayed zero-padded to four digits using `score.toString().padStart(4, '0')` — for example, `5` renders as `0005` and `404` as `0404`.
+
+## Scroll-triggered animation
+
+An `IntersectionObserver` with `{ threshold: 0.1 }` is created inside a `useEffect` and attached to the component's root `div` via a `ref`. When at least 10 % of the table enters the viewport:
+
+1. The observer sets the `isVisible` state to `true`.
+2. The observer immediately disconnects itself so the animation only fires once per page load.
+
+Until `isVisible` is `true`, all rows are styled with `opacity-0 -translate-x-8` (translated 2 rem to the left). Once visible they transition to `opacity-100 translate-x-0` with `transition-all duration-1000`. Each row receives a `transitionDelay` of `index × 200ms`, creating a staggered cascade.
+
+## Counter animation
+
+Each score value is rendered by a dedicated `AnimatedCounter` sub-component that accepts `end` (target value) and `duration` (milliseconds). It uses `requestAnimationFrame` with the following easing function:
+
+```js
+// Quartic ease-out: fast start, smooth deceleration
+const eased = 1 - Math.pow(1 - progress, 4);
+const current = Math.floor(end * eased);
+```
+
+Where `progress` is `elapsed / duration`, clamped to `[0, 1]`. The counter runs for `2000 ms` per score and snaps to the exact `end` value on the final frame to avoid floating-point drift.
+
+## Layout & appearance
+
+| Element | Classes |
+|---|---|
+| Outer container | `border-4 border-arcade-cyan pixel-border-cyan bg-arcade-black/80` |
+| Header | `font-press text-arcade-cyan animate-pulse-fast` |
+| Column headers | `font-vt323 text-arcade-magenta border-b-2 border-arcade-magenta/30` |
+| Rank | `font-vt323 text-arcade-muted` |
+| Score | `font-vt323 text-arcade-green glow-green font-bold tracking-widest` |
+| Initials | `font-vt323 text-arcade-white` |
+
+<Note>
+  The `IntersectionObserver` disconnects after the first intersection, so
+  scrolling away and back will not replay the animation. If you need it to
+  re-trigger on every scroll-into-view, remove the `observer.disconnect()` call
+  and also reset `isVisible` to `false` when the element leaves the viewport
+  using the `isIntersecting` flag in the callback.
+</Note>
+
+## Customization
+
+<Tip>
+  To update the displayed statistics, edit the `scores` array at the top of
+  `HighScoreTable.js`. Each entry takes three fields: `initials` (up to 3
+  characters rendered right-aligned), `score` (a number — padded automatically
+  to 4 digits), and `label` (a descriptive string shown as a tooltip or
+  accessible label).
+
+  To change the counter duration, adjust the `duration` prop passed to
+  `AnimatedCounter` — currently hardcoded at `2000` ms per row. For very large
+  numbers (e.g. `9999`), a longer duration produces a more satisfying scroll.
+  The easing function itself lives in the `useEffect` inside `AnimatedCounter`;
+  swap `Math.pow(1 - d, 4)` for `Math.pow(1 - d, 2)` for a gentler
+  ease-out, or `Math.pow(1 - d, 6)` for a more dramatic snap.
+</Tip>

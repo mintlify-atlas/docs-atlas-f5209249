@@ -1,0 +1,146 @@
+---
+title: "Case Studies Page — Press Start Boss Battle Log"
+sidebarTitle: "Case Studies"
+description: "The Case Studies page frames each project deep-dive as a Boss Battle Log. A scroll-driven HP bar depletes as you read, showing DEFEATED when you reach the end."
+---
+
+The Case Studies page (`K` component, route `/case-studies`) is the portfolio's most narrative-driven section. Each case study is presented as a **Boss Battle Log** — a long-form post-mortem that walks through a real engineering problem using the grammar of an RPG encounter: identify the boss, define the mission, execute the strategy, collect XP. A sticky vertical **BOSS HP** bar runs alongside the content and depletes in real time as the visitor scrolls toward the bottom of the page. When the bar hits zero the label changes to **DEFEATED** with a blinking arcade-green animation.
+
+## Route
+
+`/case-studies`
+
+## Case study data
+
+Case studies are defined in the `Y` array. The current release ships with one entry:
+
+```js
+const caseStudies = [
+  {
+    id: "boss-01",
+    name: "THE LEGACY MONOLITH",
+    problem:
+      "A 10-year-old PHP application that took 45 seconds to load a user profile. No documentation, original devs long gone.",
+    goal:
+      "Migrate to a modern React/Node stack without downtime, reducing load times to under 1 second.",
+    process:
+      "Strangler fig pattern. We built the new Node API alongside the old one, routing specific endpoints over one by one. Front-end was rebuilt in React, consuming the new API.",
+    design:
+      "Kept the UI familiar to avoid user shock, but modernized the typography and spacing. Introduced a design system to speed up future development.",
+    tech:
+      "React, Node.js, Express, PostgreSQL. Chose Node to share types with the frontend via TypeScript.",
+    debug:
+      "The hardest part was data migration. The old DB had no foreign keys and inconsistent data types. Wrote a massive Python script to sanitize and migrate the data.",
+    result:
+      "Profile load time dropped to 300ms. Server costs reduced by 40%. Development speed increased significantly.",
+    xp: [
+      "System Architecture",
+      "Data Migration",
+      "TypeScript",
+      "Patience",
+    ],
+    next: "Implement GraphQL to reduce over-fetching on the dashboard.",
+  },
+];
+```
+
+### Field reference
+
+| Field     | Type     | Rendered as                                                      |
+|-----------|----------|------------------------------------------------------------------|
+| `id`      | string   | Identifier (e.g. `"boss-01"`); used as React key for the list    |
+| `name`    | string   | Large h1 hero heading in arcade-white with cyan glow             |
+| `problem` | string   | Block quote with magenta left border — "THE BOSS" section        |
+| `goal`    | string   | Body paragraph — "MISSION" section                               |
+| `process` | string   | Body paragraph — "STRATEGY" section                              |
+| `design`  | string   | Body paragraph — "BUILD CHOICES" section                         |
+| `tech`    | string   | VT323 large text in arcade-green — "TECH STACK" section          |
+| `debug`   | string   | Dark terminal block — "DEBUG LOG" section                        |
+| `result`  | string   | Bold 2xl cyan text — "VICTORY" section                           |
+| `xp`      | string[] | Array of tags rendered as `+ TAG` bordered chips — "XP GAINED"  |
+| `next`    | string   | Italic muted paragraph — "NEW GAME+" section                     |
+
+## Section headers
+
+Each section is preceded by a decorative divider rendered by the inline `a` sub-component (confusingly named — it is a divider, not an anchor):
+
+```js
+const SectionDivider = ({ title }) => (
+  <div className="flex items-center gap-4 my-12">
+    <div className="h-1 flex-grow bg-arcade-magenta/30" />
+    <h3 className="font-press text-xl text-arcade-magenta">{title}</h3>
+    <div className="h-1 flex-grow bg-arcade-magenta/30" />
+  </div>
+);
+```
+
+The section titles in order are:
+
+1. `THE BOSS (Problem)`
+2. `MISSION (Goal)`
+3. `STRATEGY (Process)`
+4. `BUILD CHOICES`
+5. `TECH STACK`
+6. `DEBUG LOG`
+7. `VICTORY (Result)`
+8. `XP GAINED`
+9. `NEW GAME+`
+
+## Boss HP scroll-progress bar
+
+The sticky sidebar on the right (desktop only — hidden below `lg` breakpoint) renders a vertical HP bar that tracks reading progress:
+
+```js
+useEffect(() => {
+  const handleScroll = () => {
+    const scrollTop    = document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight
+                       - document.documentElement.clientHeight;
+    const progress     = scrollTop / scrollHeight;          // 0 → 1
+    const hp           = 100 - progress * 100;              // 100% → 0%
+    setHp(Math.max(0, Math.min(100, hp)));
+  };
+  window.addEventListener("scroll", handleScroll);
+  return () => window.removeEventListener("scroll", handleScroll);
+}, []);
+```
+
+The bar fills from the bottom (`justify-end`) and its height is set via the inline style `{ height: \`${hp}%\` }`. A neon-magenta `box-shadow` is applied while `hp > 0`; the shadow disappears at zero.
+
+When `hp === 0` a `DEFEATED` label appears below the bar with `animate-blink`.
+
+<Note>
+The HP bar measures scroll progress against the **entire document height**, not just the case study content area. If you add a tall header or footer, the bar will reach zero before the visitor has finished reading the last paragraph. Consider scoping the scroll calculation to a content ref instead.
+</Note>
+
+## Current page layout
+
+The component currently renders `Y[0]` — the first (and only) case study — directly, without routing or selection UI. The `Y` array exists, but there is no list view or navigation between multiple entries yet.
+
+## Adding more case studies
+
+1. Append a new object to the `Y` array, following the field schema above.
+2. Implement a selection mechanism. The simplest approach is to add a top-of-page list of boss names (like a stage-select screen) where clicking a name sets a `selectedId` state, and the body renders `caseStudies.find(c => c.id === selectedId)` instead of the hardcoded `Y[0]`.
+
+```js
+// Minimal stage-select pattern
+const [selectedId, setSelectedId] = useState(caseStudies[0].id);
+const study = caseStudies.find(c => c.id === selectedId);
+```
+
+<Tip>
+Give each case study a unique `id` string in `boss-NN` format (e.g. `"boss-02"`) to keep the numbering consistent with the `BOSS BATTLE LOG #01` display badge at the top of the page.
+</Tip>
+
+## Debug Log block
+
+The `debug` field renders inside a styled terminal block to visually separate it from narrative prose:
+
+```
+┌────────────────────────────────────────────────────┐
+│ > ERROR: Data integrity compromised.               │
+│ The old DB had no foreign keys and inconsistent…   │
+└────────────────────────────────────────────────────┘
+```
+
+The top line (`> ERROR: Data integrity compromised.`) is hardcoded decorative text in arcade-yellow. The line below it renders the `debug` field value. If your case study's debug section doesn't involve a data integrity error, replace the hardcoded yellow line with something more appropriate for that story.

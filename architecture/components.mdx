@@ -1,0 +1,129 @@
+---
+title: "Press Start: React Component Tree and Architecture"
+sidebarTitle: "Component Tree"
+description: "An overview of the Press Start React component hierarchy: App root, PressStartGate, CRTOverlay, ArcadeMenu, PageWrapper, HighScoreTable, and PixelSprite."
+---
+
+Press Start has a deliberately shallow component tree. The root `App` component (`Q` in the minified bundle) owns a single piece of state — a boolean that tracks whether the player has pressed start — and uses it to decide between rendering the `PressStartGate` splash screen and the full application shell. Once the gate is cleared, the shell renders a persistent chrome layer (`CRTOverlay`, `ArcadeMenu`, footer) wrapped around a `PageWrapper` that manages route transitions. All page content renders inside `Routes` at the leaf level.
+
+## Component hierarchy
+
+```text
+App
+├── CRTOverlay              (always rendered, sits above everything)
+│
+├── [before start]
+│   └── PressStartGate      (blocks the app until "PRESS START" is clicked)
+│
+└── [after start]
+    ├── ArcadeMenu          (sticky nav bar — keyboard + click navigation)
+    ├── main
+    │   └── PageWrapper     (fade + scanline transition on route change)
+    │       └── Routes
+    │           ├── /             → Home
+    │           │   ├── HighScoreTable
+    │           │   └── PixelSprite
+    │           ├── /about        → About
+    │           ├── /projects     → Projects
+    │           ├── /skills       → Skills
+    │           ├── /writing      → Writing
+    │           ├── /case-studies → CaseStudies
+    │           ├── /contact      → Contact
+    │           └── *             → "GAME OVER" element
+    └── footer
+```
+
+The `BrowserRouter` (imported as `B` / `Np`) wraps the entire tree and is the outermost element returned by `App`.
+
+## Component reference
+
+### `PressStartGate`
+
+Renders a full-screen black splash with the "PLAYER ONE" heading, an animated "PRESS START" button, and a coin-credit counter. It accepts a single `onStart` callback prop. When the button is clicked, the component fades to opacity `0` over 300 ms — triggering a white flash overlay — then calls `onStart` after a 600 ms delay. `App` stores the gate-cleared boolean in `useState` and passes `() => setStarted(true)` as the callback.
+
+```jsx
+// PressStartGate.js (source excerpt)
+function PressStartGate({ onStart }) {
+  const [exiting, setExiting] = useState(false);
+  const handleStart = () => {
+    setExiting(true);
+    setTimeout(() => { onStart(); }, 600);
+  };
+  return (
+    <div className={`fixed inset-0 z-50 bg-arcade-black flex flex-col items-center
+      justify-center transition-opacity duration-300
+      ${exiting ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+      <h1 className="font-press text-4xl md:text-6xl text-arcade-green glow-green crt-rgb-split">
+        PLAYER ONE
+      </h1>
+      <button onClick={handleStart}
+        className="font-press text-2xl text-arcade-magenta animate-pulse-fast ...">
+        PRESS START
+      </button>
+      {exiting && (
+        <div className="absolute inset-0 bg-white animate-flicker mix-blend-screen z-50 pointer-events-none" />
+      )}
+    </div>
+  );
+}
+```
+
+### `CRTOverlay`
+
+A fixed, pointer-events-none overlay that renders the phosphor scanline and RGB-split visual effects across the entire viewport. It is always present in the tree — both before and after the gate — so the CRT aesthetic applies to the splash screen as well as the main application. The component has no props and no internal state.
+
+### `ArcadeMenu`
+
+The sticky navigation bar rendered at the top of the application shell. It maps the seven named routes to `<Link>` elements styled with the arcade green/magenta palette. The active route is highlighted with a `►` indicator and an underline. `ArcadeMenu` also owns the global `keydown` listener that cycles through routes on `ArrowLeft` / `ArrowRight` / `ArrowUp` / `ArrowDown` key presses. See [ArcadeMenu component reference](/components/arcade-menu) for full documentation.
+
+### `PageWrapper`
+
+A layout wrapper that sits directly inside `<main>` and surrounds the `<Routes>` block. It watches `useLocation()` and, on every route change, performs a two-phase animation: the content fades out over 150 ms while a green scanline div flashes across the screen, then the new route's content fades back in. The component accepts a single `children` prop.
+
+### `HighScoreTable`
+
+Renders an animated high-score leaderboard display on the Home page. It uses an `IntersectionObserver` to trigger entrance animations when scrolled into view.
+
+### `PixelSprite`
+
+Renders a pixel-art character sprite on the Home page using inline SVG `<rect>` elements. The component is self-contained with no props and acts as a decorative visual accent consistent with the arcade theme.
+
+## Component quick-reference
+
+<CardGroup cols={2}>
+  <Card
+    title="PressStartGate"
+    icon="door-open"
+    href="/components/press-start-gate"
+  >
+    Intro splash screen that gates the app behind a "PRESS START" interaction with a fade-out and white-flash transition.
+  </Card>
+  <Card
+    title="ArcadeMenu"
+    icon="gamepad"
+    href="/components/arcade-menu"
+  >
+    Sticky navigation bar with active-route highlighting, keyboard arrow-key cycling, and retro arcade styling.
+  </Card>
+  <Card
+    title="CRTOverlay"
+    icon="tv"
+    href="/components/crt-overlay"
+  >
+    Full-screen fixed overlay that applies phosphor scanline and RGB-split effects to the entire viewport.
+  </Card>
+  <Card
+    title="HighScoreTable"
+    icon="trophy"
+    href="/components/high-score-table"
+  >
+    Scroll-triggered animated leaderboard displayed on the Home page, built with IntersectionObserver.
+  </Card>
+  <Card
+    title="PixelSprite"
+    icon="image"
+    href="/components/pixel-sprite"
+  >
+    Decorative pixel-art sprite rendered with SVG rectangles on the Home page hero section.
+  </Card>
+</CardGroup>

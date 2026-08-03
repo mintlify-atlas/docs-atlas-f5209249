@@ -1,0 +1,80 @@
+---
+title: "PressStartGate – Arcade Entry Screen Component"
+sidebarTitle: "PressStartGate"
+description: "Full-screen arcade entry gate that greets PLAYER ONE, waits for a button press, then fades out with a white flicker before handing off to the app."
+---
+
+`PressStartGate` is the first thing a visitor sees when they land on the portfolio. It renders a full-screen black overlay in the spirit of a classic arcade attract screen, displaying the "PLAYER ONE" headline and a pulsing "PRESS START" button. When the button is clicked, the gate plays a brief white-flicker exit animation and calls its `onStart` callback after a 600 ms delay, giving the opacity transition enough time to complete before the main app appears.
+
+## Props
+
+<ParamField path="onStart" type="function" required>
+  Callback invoked after the exit animation finishes. The component sets
+  `isExiting = true` on click and schedules `onStart()` via
+  `setTimeout(..., 600)`, matching the 300 ms CSS opacity transition plus a
+  safety margin.
+</ParamField>
+
+## Usage
+
+```jsx
+import PressStartGate from './components/PressStartGate';
+
+function App() {
+  const [started, setStarted] = React.useState(false);
+
+  if (!started) {
+    return <PressStartGate onStart={() => setStarted(true)} />;
+  }
+
+  return <MainLayout />;
+}
+```
+
+## Visual elements
+
+The component renders four distinct pieces of UI inside a centred flex column:
+
+| Element | Text | Styling |
+|---|---|---|
+| Headline | `PLAYER ONE` | `font-press`, `text-arcade-green`, `glow-green`, `crt-rgb-split` |
+| CTA button | `PRESS START` | `font-press`, `text-arcade-magenta`, `animate-pulse-fast` |
+| Sub-copy | `INSERT COIN TO CONTINUE` | `font-vt323`, `text-arcade-muted` |
+| Credit line | `CREDITS: 99` | `font-vt323`, smaller `text-sm` |
+
+## Behavior & state
+
+The component owns a single boolean state value, `isExiting`, which starts as `false`.
+
+1. **Button click** — `handleStart` sets `isExiting = true` and calls `setTimeout(onStart, 600)`.
+2. **Opacity transition** — The outer wrapper toggles between `opacity-100` and `opacity-0 pointer-events-none` depending on `isExiting`, with a `transition-opacity duration-300` applied via Tailwind.
+3. **White flicker** — When `isExiting` is `true`, a second absolutely-positioned `div` (`bg-white animate-flicker mix-blend-screen z-50 pointer-events-none`) is mounted on top of the overlay, simulating a CRT screen cut.
+4. **Handoff** — After 600 ms the `onStart` callback fires and the parent is responsible for unmounting the gate.
+
+The outer container is `fixed inset-0 z-50 bg-arcade-black`, so it sits above everything else while active.
+
+## Keyboard accessibility
+
+The button element receives a `focus:ring-4 focus:ring-arcade-cyan` outline and is the natural keyboard target on page load, so pressing <kbd>Enter</kbd> or <kbd>Space</kbd> also triggers the entrance sequence without mouse interaction.
+
+<Note>
+  The white flicker overlay uses `mix-blend-screen`, which requires the
+  parent's background to be non-transparent for the blend to be visible. The
+  `bg-arcade-black` on the wrapper ensures this. Users with
+  `prefers-reduced-motion` enabled will still see the opacity fade; only the
+  flicker keyframe is affected since it relies on the `animate-flicker` utility.
+</Note>
+
+## Customization
+
+<Tip>
+  To change the delay between click and handoff, adjust both the `setTimeout`
+  duration (currently `600`) inside `handleStart` and the `duration-300` class
+  on the wrapper so they remain in sync. The CSS transition completes at 300 ms;
+  the extra 300 ms is intentional breathing room.
+
+  Swap `text-arcade-green` / `text-arcade-magenta` with any Tailwind color
+  tokens defined in your `tailwind.config.js` theme to re-skin the gate for a
+  different palette. The `glow-green` and `crt-rgb-split` classes are custom
+  utilities — see `globals.css` for their definitions.
+</Tip>

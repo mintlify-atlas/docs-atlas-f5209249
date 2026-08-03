@@ -1,0 +1,139 @@
+---
+title: "Skills Page — Press Start Portfolio Player Stats"
+sidebarTitle: "Skills"
+description: "The Skills page displays abilities as a PLAYER STATS screen with level bars and a sticky CURRENT LOADOUT cabinet showing tools, plus an animated XP counter."
+---
+
+The Skills page (`V` component, route `/skills`) replaces a conventional skill list with a **PLAYER STATS** screen lifted straight out of a 1990s RPG. Each skill category appears as a bordered panel with individual skills paired with pixel level bars (1–5 filled segments). A sticky sidebar column labelled **CURRENT LOADOUT** shows the tools in active rotation as small pixel-art inventory cells. An XP counter in the top-right corner counts up from zero to 4 500 when the component mounts, adding a satisfying on-load animation.
+
+## Route
+
+`/skills`
+
+## Page header
+
+The header row spans the full width above the grid and contains:
+
+- **Left:** `PLAYER STATS` heading in arcade-magenta with glow, and a subtitle `CLASS: FULL STACK DEVELOPER`.
+- **Right:** `TOTAL XP` label in arcade-yellow above the animated counter. The counter runs from `0` to `4500` over approximately 4.5 seconds using a `setInterval` that increments by `50` every 20 ms and displays the result zero-padded to six digits.
+
+## Skill categories
+
+Skills are grouped into categories defined in the `z` array:
+
+```js
+const skillCategories = [
+  {
+    name: "LANGUAGES",
+    icon: "🔤",
+    skills: [
+      { name: "JavaScript/TS", level: 5 },
+      { name: "Python",        level: 4 },
+      { name: "HTML/CSS",      level: 5 },
+      { name: "SQL",           level: 3 },
+    ],
+  },
+  {
+    name: "FRONT-END",
+    icon: "🎨",
+    skills: [
+      { name: "React",        level: 5 },
+      { name: "Tailwind CSS", level: 4 },
+      { name: "UI/Design",    level: 4 },
+      { name: "Static Demos", level: 5 },
+    ],
+  },
+  {
+    name: "SYS/TOOLS",
+    icon: "⚙️",
+    skills: [
+      { name: "Git/GitHub",      level: 4 },
+      { name: "Debugging",       level: 5 },
+      { name: "Documentation",   level: 4 },
+      { name: "Back-end basics", level: 3 },
+    ],
+  },
+];
+```
+
+### Skill level bars
+
+Each skill is rendered with the `W` sub-component, which draws a row of five square cells. Cells up to `level` are filled with arcade-green and a neon glow; cells beyond `level` are transparent with a dark border.
+
+```js
+// W component — level bar
+function LevelBar({ level, max = 5 }) {
+  return (
+    <div className="flex gap-1 h-4">
+      {[...Array(max)].map((_, i) => (
+        <div
+          key={i}
+          className={`w-6 border border-[#333] ${
+            i < level
+              ? "bg-arcade-green shadow-[0_0_5px_rgba(57,255,20,0.5)]"
+              : "bg-transparent"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+`level` must be an integer between 1 and `max` (default 5). A `level` of 5 fills all segments; a `level` of 1 fills only the first.
+
+### Adding or editing skills
+
+- **Edit a skill:** find the matching `{ name, level }` object in the `z` array and change the values.
+- **Add a skill to an existing category:** append a new `{ name, level }` object to that category's `skills` array.
+- **Add a new category:** append a new category object (with `name`, `icon`, and `skills` array) to `z`. The grid layout uses `md:grid-cols-2` so a new panel will wrap to a new row automatically.
+
+<Tip>
+The emoji in each category's `icon` field is rendered with `grayscale contrast-200` CSS filters so it takes on a monochrome arcade-screen look. Any single emoji works, but simple, high-contrast glyphs read best at small sizes.
+</Tip>
+
+## Current Loadout sidebar
+
+The right-hand column is a sticky panel (sticks at `top: 6rem`) that shows six tool inventory cells:
+
+```js
+const loadout = [
+  "VS Code",
+  "Terminal",
+  "Figma",
+  "Chrome DevTools",
+  "Coffee",
+  "Spotify",
+];
+```
+
+Each cell renders as a 1:1 aspect-ratio square with a 4 × 4 pixel pattern inside. Hovering a cell raises its opacity and shows the tool name in a tooltip above. To change the loadout items, update the inline array in the `V` component.
+
+The sidebar footer displays two fixed status lines:
+
+```
+STATUS: OPTIMAL
+BUFFS: CAFFEINE +2
+```
+
+These are decorative and hardcoded — edit the JSX directly to adjust them.
+
+## Layout structure
+
+```
+┌──────────────────────────────────────────┐
+│ PLAYER STATS         TOTAL XP            │
+│ CLASS: FULL STACK    004500              │
+├──────────────────┬───────────────────────┤
+│  LANGUAGES       │  CURRENT LOADOUT      │
+│  FRONT-END       │  [VS Code] [Terminal] │
+│  SYS/TOOLS       │  [Figma]  [DevTools]  │
+│                  │  [Coffee] [Spotify]   │
+└──────────────────┴───────────────────────┘
+```
+
+The left area uses `lg:col-span-2` inside a three-column grid, and the sidebar occupies the third column. On screens narrower than `lg`, the sidebar drops below the category panels.
+
+<Note>
+The XP counter animation runs once on mount via `useEffect`. If you want the counter to re-run on tab visibility changes or re-renders, add a `document.addEventListener("visibilitychange", …)` handler that resets the counter state back to `0`.
+</Note>

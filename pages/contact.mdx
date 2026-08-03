@@ -1,0 +1,130 @@
+---
+title: "Contact Page — Press Start Portfolio Enter Initials"
+sidebarTitle: "Contact"
+description: "The Contact page turns form submission into an arcade coin-drop ceremony with four distinct states: idle, inserting, connecting, and success. No backend is wired up yet."
+---
+
+The Contact page (`Z` component, route `/contact`) transforms the otherwise forgettable portfolio contact form into a small theatrical moment. The heading reads **ENTER YOUR INITIALS** — the same prompt an arcade cabinet shows after a high score — and the submit button is labelled **INSERT COIN TO SEND**. Clicking it triggers a four-state submission ceremony: a coin drops into a slot, a spinner appears, and the entire page swaps to a victory screen that reads **MESSAGE SENT**. Every active input field gets an arcade-green neon border and a blinking block cursor appended to the right.
+
+## Route
+
+`/contact`
+
+## Form fields
+
+The form contains three fields, each styled as an arcade text-entry row with a `>` prompt character on the left:
+
+| Label              | Input type | Placeholder              | Required |
+|--------------------|------------|--------------------------|----------|
+| `PLAYER NAME`      | `text`     | `AAA`                    | Yes      |
+| `COMM LINK (EMAIL)`| `email`    | `player@domain.com`      | Yes      |
+| `TRANSMISSION`     | `textarea` | `Ready for co-op...`     | Yes      |
+
+Labels are rendered in VT323 font at `text-2xl` in arcade-magenta. Input text is VT323 at `text-3xl` in arcade-white, on a transparent background so the field blends into the dark panel.
+
+## Focus state
+
+Focusing a field:
+1. Sets `activeField` state to the field name (`"name"`, `"email"`, or `"message"`).
+2. Switches the enclosing border from `border-[#333]` to `border-arcade-green`.
+3. Appends a `w-4 h-8 bg-arcade-green animate-blink` cursor block inside the right side of the input row.
+
+Blurring a field resets `activeField` to `null`, removing both the green border and the cursor.
+
+## Submit states
+
+Form submission is driven by the `status` state variable, which moves through four values:
+
+### `idle`
+The default state. The submit button reads **INSERT COIN TO SEND** in Press Start 2P font on a `bg-arcade-green text-arcade-black` background.
+
+### `inserting`
+Set immediately on `form.onSubmit`. Lasts 800 ms (first `setTimeout`). Displays a yellow circle with a `$` glyph that plays a `dropIn` CSS animation — simulating a coin falling into the slot.
+
+```css
+@keyframes dropIn {
+  from { transform: translateY(-40px); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+```
+
+### `connecting`
+Set after the 800 ms coin-drop. Lasts a further 1 500 ms (second `setTimeout`). Displays a spinning `◷` glyph with `animate-spin` alongside `CONNECTING...` text with `animate-pulse`, both in arcade-cyan.
+
+### `success`
+Set after the 1 500 ms connecting phase. The entire page content is replaced by a centred screen:
+
+- **MESSAGE SENT** heading in arcade-green with `animate-pulse-fast` glow.
+- **GG. I'll respond shortly.** subtitle.
+- **RETURN TO MENU** button that resets `status` back to `"idle"`.
+
+The submission flow in code:
+
+```js
+const handleSubmit = (e) => {
+  e.preventDefault();
+  setStatus("inserting");
+  setTimeout(() => {
+    setStatus("connecting");
+    setTimeout(() => {
+      setStatus("success");
+    }, 1500);
+  }, 800);
+};
+```
+
+<Note>
+The form currently **simulates** submission only. There is no `fetch` call, no API endpoint, and no email is ever sent. The `setTimeout` chain exists purely for the animation ceremony. To make the form functional, wire up a real form service before deploying — see below.
+</Note>
+
+## Wiring up a real backend
+
+Replace the `handleSubmit` body with an actual API call. Three popular zero-infrastructure options:
+
+**Formspree**
+```js
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setStatus("inserting");
+  const res = await fetch("https://formspree.io/f/YOUR_FORM_ID", {
+    method: "POST",
+    body: new FormData(e.target),
+    headers: { Accept: "application/json" },
+  });
+  setStatus(res.ok ? "success" : "idle");
+};
+```
+
+**Netlify Forms** — add `data-netlify="true"` to the `<form>` element and deploy on Netlify. The form is intercepted at the CDN edge; no JS changes required for basic capture.
+
+**Custom API route** — POST the serialised form data to your own `/api/contact` endpoint (e.g. a Node/Express handler or a serverless function) and resolve the state machine on response.
+
+<Tip>
+Keep the `inserting` and `connecting` animation states even when using a real backend — they give the submission a satisfying ceremony that makes the form memorable. Trigger `"connecting"` when the request is in-flight and `"success"` (or an error state) when it resolves.
+</Tip>
+
+## OTHER PORTALS side panel
+
+The right column (fixed width `md:w-64`, `md:border-l-4`) displays three external link entries under the heading **OTHER PORTALS**:
+
+```js
+const portals = [
+  { label: "GITHUB",   icon: <Github />,   hoverColor: "arcade-green"   },
+  { label: "LINKEDIN", icon: <Linkedin />, hoverColor: "arcade-cyan"    },
+  { label: "DIRECT",   icon: <Mail />,     hoverColor: "arcade-magenta" },
+];
+```
+
+Each entry renders as an icon cell that transitions its border and icon colour on hover, alongside the label text. All three `href` values are currently `"#"` — replace them with your real profile URLs in the JSX.
+
+Icons used are from the **lucide-react** library (`Github`, `Linkedin`, `Mail`), imported via the bundle's shared icon chunk.
+
+<Warning>
+The "DIRECT" link uses a `Mail` icon but its `href` is a plain `"#"` placeholder. If you intend it to be a `mailto:` link, set the href to `mailto:your@email.com` rather than routing it through the contact form, so it opens the visitor's email client directly.
+</Warning>
+
+## Accessibility notes
+
+- All three input fields are `required`, so the browser will prevent submission and show native validation tooltips if fields are empty.
+- The blinking cursor uses `animate-blink` which relies on a CSS animation. Add `@media (prefers-reduced-motion: reduce)` overrides to the global stylesheet if you want to respect the OS-level reduced-motion preference.
+- The success screen replaces the form entirely — if using a screen reader, the focus should be moved to the **RETURN TO MENU** button on state change. This is not currently implemented.

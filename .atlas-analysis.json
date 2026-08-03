@@ -1,0 +1,66 @@
+{
+  "projectType": "frontend",
+  "projectName": "Press Start",
+  "projectDescription": "A retro arcade-themed personal portfolio site built with React and React Router, featuring CRT overlay effects, neon pixel aesthetics, and gamified sections for showcasing skills, projects, writing, and case studies.",
+  "theme": "willow",
+  "primaryColor": "#39FF14",
+  "lightColor": "#00F0FF",
+  "darkColor": "#060309",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Overview",
+        "pages": ["introduction", "getting-started"]
+      },
+      {
+        "group": "Architecture",
+        "pages": ["architecture/project-structure", "architecture/routing", "architecture/components"]
+      },
+      {
+        "group": "Components",
+        "pages": ["components/press-start-gate", "components/arcade-menu", "components/crt-overlay", "components/high-score-table", "components/pixel-sprite"]
+      },
+      {
+        "group": "Pages",
+        "pages": ["pages/home", "pages/about", "pages/projects", "pages/skills", "pages/writing", "pages/case-studies", "pages/contact"]
+      },
+      {
+        "group": "Styling & Theming",
+        "pages": ["styling/design-tokens", "styling/animations", "styling/typography"]
+      },
+      {
+        "group": "Deployment",
+        "pages": ["deployment/static-export", "deployment/github-pages"]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Retro arcade 'Press Start' splash screen gate with fade-out transition",
+    "CRT monitor overlay with scanline and flicker effects",
+    "Keyboard-navigable arcade menu with arrow key support",
+    "Animated neon pixel color palette (green, magenta, cyan) on deep black background",
+    "High score table with animated counter roll-up on scroll entry",
+    "Walking pixel sprite easter egg",
+    "React Router SPA with static HTML pre-rendered pages for GitHub Pages deployment",
+    "Gamified case study page with scrolling 'boss HP' sidebar meter",
+    "Writing page with page-turn animation on article open",
+    "Contact form with coin-insert submission animation"
+  ],
+  "publicApiSurface": [
+    "PressStartGate — onStart callback prop",
+    "ArcadeMenu — keyboard navigation via ArrowLeft/ArrowRight/ArrowUp/ArrowDown",
+    "CRTOverlay — fixed scanline and flicker overlay component",
+    "HighScoreTable — animated score counter with IntersectionObserver trigger",
+    "PixelSprite — walking pixel character animation",
+    "Route: / (Home)",
+    "Route: /about",
+    "Route: /projects",
+    "Route: /skills",
+    "Route: /writing",
+    "Route: /case-studies",
+    "Route: /contact",
+    "CSS variables: --neon-green (#39FF14), --neon-magenta (#FF0099), --neon-cyan (#00F0FF), --bg-color (#060309)",
+    "Tailwind arcade- color tokens: arcade-green, arcade-magenta, arcade-cyan, arcade-black, arcade-white, arcade-muted, arcade-yellow",
+    "CSS classes: .glow-green, .glow-magenta, .glow-cyan, .crt-overlay, .crt-rgb-split, .pixel-border-green, .pixel-border-magenta, .animate-blink, .animate-scanline"
+  ]
+}
